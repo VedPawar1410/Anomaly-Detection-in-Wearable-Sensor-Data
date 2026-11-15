@@ -40,6 +40,18 @@ def test_streaming_scores_match_batch_scores_exactly(cls):
     np.testing.assert_allclose(online, batch, rtol=1e-5, atol=1e-5)
 
 
+def test_streaming_matches_batch_with_stuck_check_switched_off():
+    cols = ("a", "b_temp", "c")
+    det = (
+        RollingZScoreDrift(list(cols)).fit(_signal(8000, 0, cols)).calibrate(_signal(8000, 1, cols))
+    )
+    test = _signal(4000, 2, cols)
+    test.loc[2000:2199, "b_temp"] = test.loc[1999, "b_temp"]  # frozen, but its stuck check is off
+    batch = det.score(test).to_numpy()
+    online = StreamingZScore(det).update_batch(test[list(cols)].to_numpy())
+    np.testing.assert_allclose(online, batch, rtol=1e-5, atol=1e-5)
+
+
 def test_streaming_matches_batch_on_the_real_demo_with_the_served_model():
     model_file = config.ROOT / "api" / "model" / f"{config.SERVED_DETECTOR}.json"
     det = RollingZScore.from_dict(json.loads(model_file.read_text())["detector"])

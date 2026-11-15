@@ -90,7 +90,7 @@
         "ankle_mag_y": 7.779,
         "ankle_mag_z": 6.84
       },
-      "score_us_per_row": 1.13,
+      "score_us_per_row": 1.11,
       "meta": {
         "trained_on": "2026-11-15",
         "sklearn_version": "1.9.1",
@@ -185,7 +185,7 @@
         "ankle_mag_y": 8.005,
         "ankle_mag_z": 9.624
       },
-      "score_us_per_row": 62.8,
+      "score_us_per_row": 51.24,
       "meta": {
         "trained_on": "2026-11-15",
         "sklearn_version": "1.9.1",
@@ -316,7 +316,7 @@
         "ankle_mag_y": 9.837,
         "ankle_mag_z": 12.846
       },
-      "score_us_per_row": 12.54,
+      "score_us_per_row": 11.79,
       "meta": {
         "trained_on": "2026-11-15",
         "sklearn_version": "1.9.1",
@@ -453,7 +453,7 @@
         "ankle_mag_y": 0.42,
         "ankle_mag_z": 0.273
       },
-      "score_us_per_row": 9.09,
+      "score_us_per_row": 8.24,
       "meta": {
         "trained_on": "2026-11-16",
         "sklearn_version": "1.9.1",
@@ -479,13 +479,13 @@
       "model_mb": 0.0
     },
     "rolling_zscore_drift": {
-      "clean_false_alarm_pct": 0.581,
+      "clean_false_alarm_pct": 0.365,
       "detection": {
-        "precision": 0.442,
+        "precision": 0.5237,
         "recall": 0.3352,
-        "f1": 0.3813,
-        "pr_auc": 0.3749,
-        "flagged_pct": 0.824,
+        "f1": 0.4088,
+        "pr_auc": 0.3937,
+        "flagged_pct": 0.695,
         "per_fault_type": {
           "spike": {
             "reading_recall": 0.8395,
@@ -521,7 +521,7 @@
       },
       "per_sensor_false_alarm_pct": {
         "heart_rate": 1.237,
-        "hand_temp": 1.638,
+        "hand_temp": 0.138,
         "hand_acc16_x": 0.34,
         "hand_acc16_y": 0.4,
         "hand_acc16_z": 0.385,
@@ -531,7 +531,7 @@
         "hand_mag_x": 0.351,
         "hand_mag_y": 0.475,
         "hand_mag_z": 0.412,
-        "chest_temp": 0.78,
+        "chest_temp": 0.141,
         "chest_acc16_x": 0.277,
         "chest_acc16_y": 0.359,
         "chest_acc16_z": 0.354,
@@ -541,7 +541,7 @@
         "chest_mag_x": 0.226,
         "chest_mag_y": 0.335,
         "chest_mag_z": 0.341,
-        "ankle_temp": 4.611,
+        "ankle_temp": 0.053,
         "ankle_acc16_x": 0.311,
         "ankle_acc16_y": 0.286,
         "ankle_acc16_z": 0.323,
@@ -552,7 +552,7 @@
         "ankle_mag_y": 0.457,
         "ankle_mag_z": 0.357
       },
-      "score_us_per_row": 27.1,
+      "score_us_per_row": 22.4,
       "meta": {
         "trained_on": "2026-11-16",
         "sklearn_version": "1.9.1",
@@ -654,7 +654,7 @@
         "ankle_mag_y": 0.911,
         "ankle_mag_z": 0.228
       },
-      "score_us_per_row": 153.28,
+      "score_us_per_row": 152.95,
       "meta": {
         "trained_on": "2026-11-15",
         "sklearn_version": "1.9.1",
@@ -749,7 +749,7 @@
         "ankle_mag_y": 98.153,
         "ankle_mag_z": 90.643
       },
-      "score_us_per_row": 14.08,
+      "score_us_per_row": 16.12,
       "meta": {}
     }
   }

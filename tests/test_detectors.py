@@ -72,3 +72,21 @@ def test_drift_variant_catches_a_slow_ramp_the_base_misses():
     ramp_end = slice(5400, 5599)  # the last 2 s of the ramp, where the shift is largest
     assert (drift.score(test).loc[ramp_end, "a"] > 1).mean() > 0.5
     assert (base.score(test).loc[ramp_end, "a"] > 1).mean() < 0.1
+
+
+def test_stuck_check_can_be_switched_off_for_slow_sensors():
+    def frame(n, seed):
+        df = _signal(n, seed).rename(columns={"b": "hand_temp"})
+        return df
+
+    cols = ["a", "hand_temp"]
+    det = RollingZScore(cols, false_alarm_rate=0.01, stuck_ignore=("temp",))
+    det.fit(frame(20000, 0)).calibrate(frame(20000, 1))
+    test = frame(5000, 3)
+    test.loc[3000:3199, ["a", "hand_temp"]] = test.loc[
+        2999, ["a", "hand_temp"]
+    ].to_numpy()  # both frozen 2 s
+    flags = det.score(test) > 1
+    assert flags.loc[3050:3199, "a"].mean() > 0.5  # motion sensor: frozen = fault
+    assert flags.loc[3050:3199, "hand_temp"].mean() == 0  # temperature: stuck check is off
+    assert RollingZScore.from_dict(det.to_dict()).stuck_ignore == ("temp",)

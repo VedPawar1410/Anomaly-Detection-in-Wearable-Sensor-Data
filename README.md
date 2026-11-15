@@ -9,8 +9,8 @@ wearable sensor data from the PAMAP2 dataset, live, on people the models never s
 
 | Served detector (rolling z-score + drift signal), unseen test subjects | Value |
 |---|---|
-| F1 / PR-AUC on 1,860 injected faults | **0.381 / 0.375** (best of 6 detectors; the 2024 method scores 0.024 / 0.013) |
-| False alarms on clean unseen data | **0.58%** (target 0.5%, set on a separate calibration subject) |
+| F1 / PR-AUC on 1,860 injected faults | **0.409 / 0.394** (best of 6 detectors; the 2024 method scores 0.024 / 0.013) |
+| False alarms on clean unseen data | **0.36%** (target 0.5%, set on a separate calibration subject) |
 | Faults caught in the live demo (event level) | **50 / 64 (78%)** at 1.03% false-alarm readings |
 | Stream latency, batch complete to client (local, p50 / p95) | **12.3 ms / 17.0 ms** |
 | Served model size | **4.4 KB** of JSON (the 2024 version: 52 pickles, ~560 MB) |
@@ -81,7 +81,7 @@ All detectors scored the same data: test subjects 105 and 108 (534,396 rows), 1,
 
 | Detector | F1 | PR-AUC | Precision | Recall | Clean false alarms | Score speed | Model |
 |---|---|---|---|---|---|---|---|
-| **rolling_zscore_drift** (served) | **0.381** | **0.375** | **0.442** | 0.335 | 0.58% | 30.5 µs/row | 4.4 KB JSON |
+| **rolling_zscore_drift** (served) | **0.409** | **0.394** | **0.524** | 0.335 | **0.36%** | 30.5 µs/row | 4.4 KB JSON |
 | rolling_zscore (previously served) | 0.312 | 0.263 | 0.402 | 0.255 | **0.51%** | 9.3 µs/row | 3.4 KB JSON |
 | conv_autoencoder (1D-CNN) | 0.156 | 0.095 | 0.102 | 0.339 | 3.06% | not re-measured | 45 KB |
 | window_iforest | 0.145 | 0.086 | 0.105 | 0.237 | 1.77% | 207 µs/row | 14 MB |
@@ -129,8 +129,8 @@ messages a second instead of 100.
 | Evaluation | Tested on its own training rows; random row split | Split by person; thresholds from a separate subject; 2 untouched test subjects |
 | Ground truth for anomalies | None | 1,860 injected faults, 6 types, labelled per reading |
 | Decision rule | `diff > 0.1 * actual`: flagged 70.5% of all readings on its own data | Per-sensor threshold from a 0.5% false-alarm budget |
-| Benchmark F1 / PR-AUC | 0.024 / 0.013 | 0.381 / 0.375 |
-| False alarms on clean unseen data | 83.5% | 0.58% |
+| Benchmark F1 / PR-AUC | 0.024 / 0.013 | 0.409 / 0.394 |
+| False alarms on clean unseen data | 83.5% | 0.36% |
 | Artifacts | 52 pickles (~560 MB) that can't reproduce the notebook's own printed metrics | 4.4 KB JSON, rebuilt by one command |
 | Code | One 20 MB notebook with Colab paths and hidden cell order | Python package, 37 tests, CI on every push |
 | Deployment | None | Live site, REST API and WebSocket stream |
@@ -259,13 +259,14 @@ in `web/components/LiveStream.tsx`.
 - **The faults are synthetic.** They're modelled on real failure modes, but real sensor faults may look different,
   and the numbers only describe these six types at these sizes.
 - **Small population.** 8 usable subjects; thresholds come from one calibration subject and results from two test
-  subjects. Cross-sensor models' false alarms didn't transfer (4.5% against a 0.5% target).
+  subjects. Cross-sensor models' false alarms didn't transfer (4.5% against a 0.5% target). Pooling thresholds
+  over several subjects was tried and rejected: it cut false alarms further but lost drift detection (Layer 5).
 - **Drift is only partly solved.** The level signal lifted drift recall from 23% to 34%; early in a ramp the shift
-  is still small, so most drifts are caught late or not at all. It also nudged clean false alarms to 0.58%,
-  slightly over the 0.5% target (walking into a new activity also shifts levels).
-- **Slow, coarse sensors trigger the stuck check.** On test subject 105, half of all flags were `ankle_temp`:
-  temperature changes slowly in coarse steps, so long identical runs are normal for it.
-- **The live demo shows more false alarms (1.03%) than the benchmark (0.58%)** because it joins 7 activity clips
+  is still small, so most drifts are caught late or not at all.
+- **A frozen temperature sensor is no longer caught by the stuck check.** That check is switched off for the three
+  temperature sensors because long identical runs are normal for them (it caused half of all flags on test
+  subject 105). The jump and level signals still watch temperature.
+- **The live demo shows more false alarms (1.03%) than the benchmark (0.36%)** because it joins 7 activity clips
   end to end and each join is an artificial jump.
 - **The autoencoder is offline only.** Each window sees 1 s of future samples, so it isn't used for streaming.
 - **Training is subsampled** (see compute constraint above); full-data training wasn't run.
@@ -346,6 +347,26 @@ the result as `rolling_zscore_drift`.
 *What it cost:* scoring went from 9.3 to 30.5 µs per row and streaming compute from 2.6 to 6.6 ms per batch (still
 ~15× real time), and false alarms on clean data rose slightly above the 0.5% target. Drift is improved, not solved.
 
+### Layer 5: Getting false alarms back under target (Nov 2026)
+
+*What I did:* the drift detector's false alarms sat at 0.58%, over the 0.5% target, and on one test subject half of
+all flags were a temperature sensor. I tested two fixes with leave-one-subject-out over the six non-test subjects
+(hold one person out, calibrate on the rest, measure on the held-out person), then evaluated the winner on the
+test subjects.
+
+| Variant (non-test subjects, held out one at a time) | False alarms, mean (worst) | F1 | Drift recall |
+|---|---|---|---|
+| Thresholds from subject 107 (as served) | 0.68% (0.82%) | 0.397 | 40% |
+| **+ no stuck check on temperature** (chosen) | **0.44%** (0.57%) | **0.414** | **40%** |
+| Thresholds pooled from 5 subjects + no temperature stuck check | 0.35% (0.47%) | 0.408 | 33% |
+
+| # | Decision | Why |
+|---|---|---|
+| 5.1 | Switch off the stuck check for the three temperature sensors | Temperature changes slowly in coarse steps; its stuck check produced only false alarms. Test subjects: false alarms 0.58% → 0.36%, F1 0.381 → 0.409, precision 0.442 → 0.524, every per-fault recall unchanged |
+| 5.2 | Don't pool thresholds over several subjects | Fewer false alarms, but stricter level thresholds lost drift detection (test subjects: 34% → 23%), undoing Layer 4 |
+| 5.3 | Record a selection mistake | I first picked pooling by looking at false alarms only and evaluated it on the test subjects; per-fault recall in the non-test runs already showed the drift loss. Chose again from non-test evidence; this is the second look at the test subjects in this layer |
+| 5.4 | Keep the change a named setting (`stuck_ignore`), saved in the JSON model | Visible, testable, and the streaming parity test covers it |
+
 ### Key takeaways
 
 1. **Check the plumbing before the algorithm.** The biggest problems were a truncated file, a missing `abs()` and
@@ -364,6 +385,5 @@ the result as `rolling_zscore_drift`.
 ## Future improvements
 
 - Catch drifts earlier: a CUSUM-style accumulator would flag a slow ramp before it is large.
-- Skip or retune the stuck check for slow sensors (temperature).
-- Calibrate thresholds across several subjects (leave-one-subject-out) instead of one.
+- Pool thresholds over several subjects per signal (for jump and stuck only), keeping drift sensitivity.
 - Train on all rows with more compute; test on real, labelled sensor faults if a dataset becomes available.

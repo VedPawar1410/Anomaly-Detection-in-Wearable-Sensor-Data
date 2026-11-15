@@ -9,12 +9,12 @@
   "detectors": [
     {
       "name": "rolling_zscore_drift",
-      "f1": 0.3813,
-      "pr_auc": 0.3749,
-      "precision": 0.442,
+      "f1": 0.4088,
+      "pr_auc": 0.3937,
+      "precision": 0.5237,
       "recall": 0.3352,
-      "flagged_pct": 0.824,
-      "clean_false_alarm_pct": 0.581,
+      "flagged_pct": 0.695,
+      "clean_false_alarm_pct": 0.365,
       "recall_by_type": {
         "spike": 0.8395,
         "stuck": 0.871,

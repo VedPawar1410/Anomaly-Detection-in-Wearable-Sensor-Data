@@ -5,7 +5,8 @@ and the bar every learned detector has to beat.
 
 Signals per reading, each with its own calibrated threshold:
 - jump:  |x - median of the previous 0.5 s| / std of the previous 5 s
-- stuck: how many identical values in a row (frozen sensors and dropouts repeat exactly)
+- stuck: how many identical values in a row (frozen sensors and dropouts repeat exactly);
+         switched off for sensors listed in `stuck_ignore` (the drift variant skips temperature)
 - level (RollingZScoreDrift only): |median of the last 0.5 s - median of a baseline
          that ended 5 s ago| / std of the previous 30 s. A slow drift never looks like a
          jump against the last 0.5 s, but it does move away from where the sensor was.
@@ -34,6 +35,7 @@ class RollingZScore:
         level_lag=None,
         level_window=None,
         level_scale_window=None,
+        stuck_ignore=(),
     ):
         self.columns = list(columns or config.SENSOR_COLUMNS)
         self.center_window = center_window
@@ -42,8 +44,17 @@ class RollingZScore:
         self.level_lag = level_lag  # None: no level signal
         self.level_window = level_window
         self.level_scale_window = level_scale_window
+        # sensors (by name fragment) whose stuck check is off: slow, coarse sensors like
+        # temperature repeat values for long stretches as normal behaviour
+        self.stuck_ignore = tuple(stuck_ignore)
         self.scale_floor_ = None
         self.thresholds_ = None  # (jump, stuck) or (jump, stuck, level), one value per sensor
+
+    @property
+    def stuck_mask(self) -> np.ndarray:
+        """True for sensors whose stuck check is switched off."""
+        frags = getattr(self, "stuck_ignore", ())  # older pickles predate this setting
+        return np.array([any(f in c for f in frags) for c in self.columns], dtype=bool)
 
     @property
     def uses_level(self) -> bool:
@@ -62,6 +73,7 @@ class RollingZScore:
             "scale_floor": [float(v) for v in self.scale_floor_],
             "jump_threshold": [float(v) for v in tj],
             "stuck_threshold": [float(v) for v in ts],
+            "stuck_ignore": list(getattr(self, "stuck_ignore", ())),
         }
         if self.uses_level:
             d.update(
@@ -78,6 +90,7 @@ class RollingZScore:
         klass = RollingZScoreDrift if d.get("level_lag") else RollingZScore
         det = klass(d["columns"], d["center_window"], d["scale_window"], d["false_alarm_rate"])
         det.scale_floor_ = np.asarray(d["scale_floor"])
+        det.stuck_ignore = tuple(d.get("stuck_ignore", ()))
         thresholds = [np.asarray(d["jump_threshold"]), np.asarray(d["stuck_threshold"])]
         if d.get("level_lag"):
             det.level_lag = d["level_lag"]
@@ -101,7 +114,9 @@ class RollingZScore:
             scale = past_rolling(X, self.scale_window, "std", min_periods=20)
             jump = (X - center).abs() / np.maximum(scale, self.scale_floor_)
             out[0][rows] = jump.fillna(0).to_numpy()
-            out[1][rows] = run_length(X.to_numpy())
+            stuck = run_length(X.to_numpy())
+            stuck[:, self.stuck_mask] = 0  # switched-off sensors never score as stuck
+            out[1][rows] = stuck
             if self.uses_level:
                 recent = X.rolling(self.center_window, min_periods=5).median()
                 baseline = (
@@ -143,4 +158,7 @@ class RollingZScoreDrift(RollingZScore):
             level_lag=500,  # baseline ends 5 s ago...
             level_window=1000,  # ...and covers 10 s (5-15 s ago), so a 3-10 s drift stands out
             level_scale_window=3000,  # scaled by the spread over the last 30 s
+            # Temperature changes slowly in coarse steps, so long identical runs are normal for it:
+            # its stuck check produced only false alarms (chosen on non-test subjects, see README).
+            stuck_ignore=("temp",),
         )

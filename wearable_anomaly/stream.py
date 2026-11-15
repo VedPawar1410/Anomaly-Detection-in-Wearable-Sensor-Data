@@ -67,7 +67,7 @@ class StreamingZScore:
 
         # stuck: identical values in a row, including this one
         self.run = np.where(x32 == self.last, self.run + 1, 1) if self.last is not None else 1.0
-        signals.append(np.broadcast_to(self.run, x.shape))
+        signals.append(np.where(self.d.stuck_mask, 0.0, np.broadcast_to(self.run, x.shape)))
 
         # level: last cw samples (incl. this one) vs a baseline that ended level_lag ago
         if self.d.uses_level:
