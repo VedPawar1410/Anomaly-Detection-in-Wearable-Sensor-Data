@@ -1,0 +1,3 @@
+# Training extras: the deep autoencoder (benchmark only, never deployed)
+-r requirements-dev.txt
+torch==2.15.0

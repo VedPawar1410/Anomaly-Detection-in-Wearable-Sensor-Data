@@ -120,6 +120,19 @@ IFOREST_PARAMS = {
     "random_state": RANDOM_SEED,
 }
 
+# 1D convolutional autoencoder (benchmark only; needs requirements-train.txt).
+# Compute budget: each epoch trains on a fresh random sample of 1 s windows rather
+# than every possible window, on CPU.
+AE_PARAMS = {
+    "window": 100,  # samples (1 s)
+    "hidden": 32,
+    "code": 8,  # bottleneck channels at 1/4 time resolution
+    "epochs": 15,
+    "windows_per_epoch": 40_000,
+    "batch_size": 256,
+    "lr": 1e-3,
+}
+
 # Thresholds are set so that this share of readings on the clean calibration
 # subject would be flagged: the expected false-alarm rate, chosen up front.
 TARGET_FALSE_ALARM_RATE = 0.005

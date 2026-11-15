@@ -96,7 +96,8 @@ def markdown_table(results: dict) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--detectors", nargs="+", default=sorted(detectors.REGISTRY))
+    # default: every detector whose dependencies are installed (the autoencoder needs torch)
+    parser.add_argument("--detectors", nargs="+", default=detectors.available())
     parser.add_argument("--retrain", action="store_true")
     args = parser.parse_args()
 
