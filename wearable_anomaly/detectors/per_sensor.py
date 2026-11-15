@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import r2_score
 
 from wearable_anomaly import config
 
@@ -64,3 +65,29 @@ class PerSensorRegressor:
 
     def detect(self, df: pd.DataFrame) -> pd.DataFrame:
         return self.score(df) > 1
+
+    def extra_metrics(self, clean_test: pd.DataFrame) -> dict:
+        """How well each sensor is predicted from the others on unseen subjects (R²)."""
+        preds = self.predict(clean_test)
+        r2 = {c: round(float(r2_score(clean_test[c], preds[c])), 4) for c in self.columns}
+        return {"median_r2": round(float(np.median(list(r2.values()))), 4), "r2": r2}
+
+
+class Rule2024:
+    """The 2024 decision rule on top of fitted per-sensor models, kept for comparison.
+
+    Flags a reading when |actual - predicted| > 0.1 * actual. Because `actual` has no
+    abs(), every negative reading is flagged; scores make that explicit (infinite).
+    """
+
+    name = "rule_2024"
+
+    def __init__(self, base: PerSensorRegressor):
+        self.base = base
+        self.columns = base.columns
+
+    def score(self, df: pd.DataFrame) -> pd.DataFrame:
+        actual = df[self.columns]
+        diff = (actual - self.base.predict(df)).abs()
+        limit = 0.1 * actual
+        return (diff / limit).where(limit > 0, np.inf)

@@ -1,6 +1,7 @@
 """Flag anomalous readings in a PAMAP2-format recording.
 
     python -m wearable_anomaly.detect data/raw/PAMAP2_Dataset/Protocol/subject108.dat -o flags.csv
+    python -m wearable_anomaly.detect <file.dat> --detector <name>
 
 Writes one row per flagged reading: subject, timestamp, activity_id, sensor,
 value, predicted, score. `predicted` is the model's expected value, which can be
@@ -13,19 +14,26 @@ import re
 from pathlib import Path
 
 import joblib
+import numpy as np
 import pandas as pd
 
+from wearable_anomaly import detectors
 from wearable_anomaly.data import read_dat
 from wearable_anomaly.preprocess import clean
-from wearable_anomaly.train import MODEL_PATH
+from wearable_anomaly.train import DEFAULT_DETECTOR, model_path
 
 
 def detect_frame(df: pd.DataFrame, detector) -> pd.DataFrame:
-    """Return flagged readings in long format for a cleaned DataFrame."""
-    preds = detector.predict(df)
-    scores = detector.score(df, preds)
-    flags = scores > 1
-    rows, cols = flags.to_numpy().nonzero()
+    """Return flagged readings in long format for a cleaned DataFrame.
+
+    `predicted` is filled only for detectors that predict values (e.g. per_sensor_rf).
+    """
+    scores = detector.score(df).to_numpy()
+    rows, cols = (scores > 1).nonzero()
+    if hasattr(detector, "predict"):
+        predicted = detector.predict(df).to_numpy()[rows, cols]
+    else:
+        predicted = np.full(len(rows), np.nan)
     return pd.DataFrame(
         {
             "subject": df["subject"].to_numpy()[rows],
@@ -33,8 +41,8 @@ def detect_frame(df: pd.DataFrame, detector) -> pd.DataFrame:
             "activity_id": df["activity_id"].to_numpy()[rows],
             "sensor": [detector.columns[c] for c in cols],
             "value": df[detector.columns].to_numpy()[rows, cols],
-            "predicted": preds.to_numpy()[rows, cols],
-            "score": scores.to_numpy()[rows, cols],
+            "predicted": predicted,
+            "score": scores[rows, cols],
         }
     )
 
@@ -43,9 +51,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[1])
     parser.add_argument("input", type=Path, help="PAMAP2 .dat file")
     parser.add_argument("-o", "--output", type=Path, default=Path("flags.csv"))
+    parser.add_argument("--detector", default=DEFAULT_DETECTOR, choices=sorted(detectors.REGISTRY))
     args = parser.parse_args()
 
-    detector = joblib.load(MODEL_PATH)["detector"]
+    detector = joblib.load(model_path(args.detector))["detector"]
     raw = read_dat(args.input)
     match = re.search(r"(\d+)", args.input.stem)
     raw.insert(0, "subject", int(match.group(1)) if match else 0)

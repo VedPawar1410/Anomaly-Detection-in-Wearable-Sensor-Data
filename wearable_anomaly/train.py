@@ -1,22 +1,27 @@
-"""Train and calibrate the per-sensor detector.
+"""Train and calibrate a detector.
 
-    python -m wearable_anomaly.train
+    python -m wearable_anomaly.train                       # default: per_sensor_rf
+    python -m wearable_anomaly.train --detector <name>     # any name in detectors.REGISTRY
 
-Writes models/per_sensor_rf.joblib (git-ignored; rebuild it with this command).
+Writes models/<name>.joblib (git-ignored; rebuild it with this command).
 """
 
+import argparse
 import time
 from datetime import date
 
 import joblib
 import sklearn
 
-from wearable_anomaly import config
+from wearable_anomaly import config, detectors
 from wearable_anomaly.data import load_subjects
-from wearable_anomaly.detectors.per_sensor import PerSensorRegressor
 from wearable_anomaly.preprocess import clean, split_by_subject
 
-MODEL_PATH = config.MODELS_DIR / "per_sensor_rf.joblib"
+DEFAULT_DETECTOR = "per_sensor_rf"
+
+
+def model_path(name: str):
+    return config.MODELS_DIR / f"{name}.joblib"
 
 
 def load_splits() -> dict:
@@ -24,27 +29,23 @@ def load_splits() -> dict:
     return split_by_subject(clean(load_subjects(subjects)))
 
 
-def main() -> None:
-    splits = load_splits()
-    train = splits["train"].iloc[:: config.TRAIN_STRIDE]
+def train_detector(name: str, splits: dict) -> dict:
+    """Fit on the training subjects, calibrate on the calibration subject, save, return the bundle."""
+    detector = detectors.make(name)
+    # Row-wise models train on every Nth row (compute budget, see config). Window-based
+    # detectors need contiguous samples, so they set train_stride = 1 and subsample internally.
+    stride = getattr(detector, "train_stride", config.TRAIN_STRIDE)
+    train = splits["train"].iloc[::stride]
     print(
-        f"Training on {len(train):,} rows (every {config.TRAIN_STRIDE}th of "
-        f"{len(splits['train']):,}), subjects {config.TRAIN_SUBJECTS}"
+        f"[{name}] training on {len(train):,} rows (stride {stride}), subjects {config.TRAIN_SUBJECTS}"
     )
 
     t0 = time.time()
-    detector = PerSensorRegressor().fit(train)
+    detector.fit(train)
     fit_s = time.time() - t0
-    print(f"Fitted {len(detector.models_)} models in {fit_s:.0f} s")
-
     detector.calibrate(splits["calib"])
-    print(
-        f"Calibrated thresholds on subject {config.CALIB_SUBJECTS} "
-        f"({len(splits['calib']):,} rows, target false-alarm rate "
-        f"{config.TARGET_FALSE_ALARM_RATE:.1%})"
-    )
+    print(f"[{name}] fitted in {fit_s:.0f} s, calibrated on subject {config.CALIB_SUBJECTS}")
 
-    config.MODELS_DIR.mkdir(exist_ok=True)
     bundle = {
         "detector": detector,
         "meta": {
@@ -53,13 +54,30 @@ def main() -> None:
             "train_subjects": config.TRAIN_SUBJECTS,
             "calib_subjects": config.CALIB_SUBJECTS,
             "train_rows": len(train),
-            "train_stride": config.TRAIN_STRIDE,
+            "train_stride": stride,
             "fit_seconds": round(fit_s, 1),
-            "rf_params": {k: v for k, v in config.RF_PARAMS.items() if k != "n_jobs"},
+            "params": repr(getattr(detector, "estimator", detector)),
         },
     }
-    joblib.dump(bundle, MODEL_PATH, compress=3)
-    print(f"Saved {MODEL_PATH.relative_to(config.ROOT)} ({MODEL_PATH.stat().st_size / 1e6:.1f} MB)")
+    config.MODELS_DIR.mkdir(exist_ok=True)
+    path = model_path(name)
+    joblib.dump(bundle, path, compress=3)
+    print(f"[{name}] saved {path.relative_to(config.ROOT)} ({path.stat().st_size / 1e6:.1f} MB)")
+    return bundle
+
+
+def load_or_train(name: str, splits: dict, retrain: bool = False) -> dict:
+    path = model_path(name)
+    if path.exists() and not retrain:
+        return joblib.load(path)
+    return train_detector(name, splits)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--detector", default=DEFAULT_DETECTOR, choices=sorted(detectors.REGISTRY))
+    args = parser.parse_args()
+    train_detector(args.detector, load_splits())
 
 
 if __name__ == "__main__":

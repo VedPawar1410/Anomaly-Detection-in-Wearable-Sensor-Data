@@ -1,0 +1,234 @@
+{
+  "test_subjects": [
+    105,
+    108
+  ],
+  "test_rows": 534396,
+  "injected_events": 1860,
+  "injected_reading_pct": 1.086,
+  "events_per_type": {
+    "spike": 1240,
+    "stuck": 124,
+    "offset": 124,
+    "drift": 124,
+    "dropout": 124,
+    "noise": 124
+  },
+  "target_false_alarm_pct": 0.5,
+  "detectors": {
+    "per_sensor_rf": {
+      "clean_false_alarm_pct": 4.523,
+      "detection": {
+        "precision": 0.0817,
+        "recall": 0.371,
+        "f1": 0.1339,
+        "pr_auc": 0.1164,
+        "flagged_pct": 4.935,
+        "per_fault_type": {
+          "spike": {
+            "reading_recall": 0.9685,
+            "event_recall": 0.9685,
+            "events": 1240
+          },
+          "stuck": {
+            "reading_recall": 0.0392,
+            "event_recall": 0.1048,
+            "events": 124
+          },
+          "offset": {
+            "reading_recall": 0.6956,
+            "event_recall": 0.8387,
+            "events": 124
+          },
+          "drift": {
+            "reading_recall": 0.4367,
+            "event_recall": 0.9677,
+            "events": 124
+          },
+          "dropout": {
+            "reading_recall": 0.183,
+            "event_recall": 0.2177,
+            "events": 124
+          },
+          "noise": {
+            "reading_recall": 0.3056,
+            "event_recall": 1.0,
+            "events": 124
+          }
+        }
+      },
+      "per_sensor_false_alarm_pct": {
+        "heart_rate": 8.437,
+        "hand_temp": 15.395,
+        "hand_acc16_x": 2.548,
+        "hand_acc16_y": 2.299,
+        "hand_acc16_z": 1.816,
+        "hand_gyro_x": 2.175,
+        "hand_gyro_y": 5.093,
+        "hand_gyro_z": 4.106,
+        "hand_mag_x": 6.13,
+        "hand_mag_y": 15.696,
+        "hand_mag_z": 3.395,
+        "chest_temp": 0.0,
+        "chest_acc16_x": 1.275,
+        "chest_acc16_y": 4.594,
+        "chest_acc16_z": 1.695,
+        "chest_gyro_x": 1.417,
+        "chest_gyro_y": 1.844,
+        "chest_gyro_z": 2.128,
+        "chest_mag_x": 14.297,
+        "chest_mag_y": 1.63,
+        "chest_mag_z": 4.167,
+        "ankle_temp": 0.0,
+        "ankle_acc16_x": 1.692,
+        "ankle_acc16_y": 0.728,
+        "ankle_acc16_z": 0.483,
+        "ankle_gyro_x": 2.455,
+        "ankle_gyro_y": 5.063,
+        "ankle_gyro_z": 5.745,
+        "ankle_mag_x": 1.222,
+        "ankle_mag_y": 9.837,
+        "ankle_mag_z": 12.846
+      },
+      "score_us_per_row": 8.99,
+      "meta": {
+        "trained_on": "2026-11-15",
+        "sklearn_version": "1.9.1",
+        "train_subjects": [
+          101,
+          102,
+          103,
+          104,
+          106
+        ],
+        "calib_subjects": [
+          107
+        ],
+        "train_rows": 116890,
+        "train_stride": 10,
+        "fit_seconds": 311.8,
+        "rf_params": {
+          "n_estimators": 40,
+          "max_depth": 12,
+          "min_samples_leaf": 10,
+          "max_features": 0.5,
+          "random_state": 42
+        }
+      },
+      "model_mb": 59.1,
+      "extra": {
+        "median_r2": 0.0729,
+        "r2": {
+          "heart_rate": 0.3115,
+          "hand_temp": -0.0936,
+          "hand_acc16_x": 0.5436,
+          "hand_acc16_y": -0.1269,
+          "hand_acc16_z": 0.2615,
+          "hand_gyro_x": 0.1412,
+          "hand_gyro_y": -0.2079,
+          "hand_gyro_z": 0.041,
+          "hand_mag_x": 0.5663,
+          "hand_mag_y": -0.0497,
+          "hand_mag_z": 0.2472,
+          "chest_temp": -0.0097,
+          "chest_acc16_x": 0.0729,
+          "chest_acc16_y": 0.2922,
+          "chest_acc16_z": 0.5263,
+          "chest_gyro_x": 0.193,
+          "chest_gyro_y": 0.1647,
+          "chest_gyro_z": 0.1282,
+          "chest_mag_x": -0.214,
+          "chest_mag_y": 0.7754,
+          "chest_mag_z": 0.5167,
+          "ankle_temp": -0.398,
+          "ankle_acc16_x": 0.1553,
+          "ankle_acc16_y": -0.079,
+          "ankle_acc16_z": -0.0606,
+          "ankle_gyro_x": -0.2093,
+          "ankle_gyro_y": -0.404,
+          "ankle_gyro_z": -0.0329,
+          "ankle_mag_x": 0.2941,
+          "ankle_mag_y": -0.3073,
+          "ankle_mag_z": -0.8002
+        }
+      }
+    },
+    "rule_2024": {
+      "clean_false_alarm_pct": 83.5,
+      "detection": {
+        "precision": 0.0121,
+        "recall": 0.9288,
+        "f1": 0.0238,
+        "pr_auc": 0.0126,
+        "flagged_pct": 83.68,
+        "per_fault_type": {
+          "spike": {
+            "reading_recall": 0.9903,
+            "event_recall": 0.9903,
+            "events": 1240
+          },
+          "stuck": {
+            "reading_recall": 0.8426,
+            "event_recall": 0.879,
+            "events": 124
+          },
+          "offset": {
+            "reading_recall": 0.9838,
+            "event_recall": 0.9758,
+            "events": 124
+          },
+          "drift": {
+            "reading_recall": 0.9238,
+            "event_recall": 0.9839,
+            "events": 124
+          },
+          "dropout": {
+            "reading_recall": 1.0,
+            "event_recall": 1.0,
+            "events": 124
+          },
+          "noise": {
+            "reading_recall": 0.9119,
+            "event_recall": 1.0,
+            "events": 124
+          }
+        }
+      },
+      "per_sensor_false_alarm_pct": {
+        "heart_rate": 63.381,
+        "hand_temp": 0.0,
+        "hand_acc16_x": 98.819,
+        "hand_acc16_y": 89.424,
+        "hand_acc16_z": 86.053,
+        "hand_gyro_x": 99.064,
+        "hand_gyro_y": 98.657,
+        "hand_gyro_z": 98.853,
+        "hand_mag_x": 84.938,
+        "hand_mag_y": 99.921,
+        "hand_mag_z": 99.932,
+        "chest_temp": 0.0,
+        "chest_acc16_x": 98.251,
+        "chest_acc16_y": 53.562,
+        "chest_acc16_z": 95.954,
+        "chest_gyro_x": 99.071,
+        "chest_gyro_y": 98.486,
+        "chest_gyro_z": 99.076,
+        "chest_mag_x": 96.719,
+        "chest_mag_y": 98.632,
+        "chest_mag_z": 94.7,
+        "ankle_temp": 0.0,
+        "ankle_acc16_x": 50.132,
+        "ankle_acc16_y": 98.77,
+        "ankle_acc16_z": 99.965,
+        "ankle_gyro_x": 98.323,
+        "ankle_gyro_y": 99.552,
+        "ankle_gyro_z": 99.483,
+        "ankle_mag_x": 100.0,
+        "ankle_mag_y": 98.153,
+        "ankle_mag_z": 90.643
+      },
+      "score_us_per_row": 8.6,
+      "meta": {}
+    }
+  }
+}
