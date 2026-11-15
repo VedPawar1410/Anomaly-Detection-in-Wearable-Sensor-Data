@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python:
+    name: Python (lint + tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      # Dev requirements only: no torch, so the autoencoder test skips itself.
+      # Tests use committed files (JSON model, demo recording) and synthetic data,
+      # so CI does not need the 1.6 GB dataset.
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q
+
+  web:
+    name: Web (lint + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  docker:
+    name: API image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Render builds this same Dockerfile; catch a broken image here, not at deploy time.
+      - run: docker build -t wearable-anomaly-api .
