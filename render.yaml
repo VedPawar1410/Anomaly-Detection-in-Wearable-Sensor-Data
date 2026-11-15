@@ -1,0 +1,16 @@
+# Render Blueprint for the API: Render reads this when you create a Blueprint from the repo.
+# The website is deployed separately on Vercel (root directory: web/).
+services:
+  - type: web
+    name: wearable-anomaly-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free # sleeps after ~15 min idle; first request then takes ~30-60 s
+    region: singapore
+    healthCheckPath: /health
+    autoDeploy: true # redeploy on every push to main
+    envVars:
+      # Comma-separated site origins allowed to call the API (CORS) and open the live stream.
+      # Set in the Render dashboard once the Vercel URL exists, e.g. https://<project>.vercel.app
+      - key: ALLOWED_ORIGINS
+        sync: false
