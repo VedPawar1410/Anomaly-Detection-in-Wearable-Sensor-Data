@@ -11,17 +11,23 @@ Environment variables:
     ALLOWED_ORIGINS  comma-separated origins allowed by CORS (default http://localhost:3000)
 """
 
+import asyncio
 import json
 import os
+import time
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+import numpy as np
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
+from wearable_anomaly import config
 from wearable_anomaly.detect import detect_frame, parse_upload
 from wearable_anomaly.detectors.rolling import RollingZScore
+from wearable_anomaly.faults import FAULT_TYPES
 from wearable_anomaly.preprocess import clean
+from wearable_anomaly.stream import BATCH_SIZE, StreamingZScore, load_demo
 
 MODEL_PATH = Path(os.getenv("MODEL_PATH", Path(__file__).parent / "model" / "rolling_zscore.json"))
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_MB", "50")) * 1_000_000
@@ -96,3 +102,82 @@ def detect(
         "returned_flags": len(top),
         "flags": json.loads(top.round(4).to_json(orient="records")),
     }
+
+
+# --- Live stream ----------------------------------------------------------------
+# The demo recording (test subject 108, faults injected offline) and, per reading,
+# which fault type was injected (0 = clean), so clients can show injected vs caught.
+_demo, _demo_faults = load_demo()
+_demo_values = _demo[detector.columns].to_numpy()
+_demo_truth = np.zeros(_demo_values.shape, dtype=np.int8)
+for _f in _demo_faults:
+    _demo_truth[_f["start"] : _f["start"] + _f["length"], detector.columns.index(_f["sensor"])] = (
+        FAULT_TYPES.index(_f["type"]) + 1
+    )
+
+
+@app.websocket("/ws/stream")
+async def stream(ws: WebSocket, speed: float = 1.0):
+    """Replay the demo at 100 Hz (times `speed`), scoring each sample as it arrives.
+
+    Messages: one {"type": "meta"}, then {"type": "batch"} every BATCH_SIZE samples,
+    then {"type": "end"}. In a batch, `flags` and `faults` are [row, sensor_index, x]
+    triples: x is the score for flags and the fault type for injected faults.
+    """
+    # CORS doesn't apply to WebSockets, so check the browser's Origin header ourselves.
+    origin = ws.headers.get("origin")
+    if origin and "*" not in ALLOWED_ORIGINS and origin not in ALLOWED_ORIGINS:
+        await ws.close(code=1008)
+        return
+    await ws.accept()
+    speed = min(max(speed, 0.25), 50.0)
+    online = StreamingZScore(detector)
+    await ws.send_json(
+        {
+            "type": "meta",
+            "sensors": detector.columns,
+            "sample_rate_hz": config.SAMPLE_RATE_HZ,
+            "batch_size": BATCH_SIZE,
+            "rows": len(_demo_values),
+            "fault_types": list(FAULT_TYPES),
+            "activities": {str(k): v for k, v in config.ACTIVITIES.items()},
+            "faults": _demo_faults,
+        }
+    )
+    loop = asyncio.get_running_loop()
+    period = BATCH_SIZE / config.SAMPLE_RATE_HZ / speed  # wall seconds per batch
+    t0, wall0 = loop.time(), time.time()
+    try:
+        for k, start in enumerate(range(0, len(_demo_values), BATCH_SIZE)):
+            # a batch is ready once its last sample has been "produced"
+            await asyncio.sleep(max(0.0, t0 + (k + 1) * period - loop.time()))
+            rows = slice(start, start + BATCH_SIZE)
+            c0 = time.perf_counter()
+            scores = online.update_batch(_demo_values[rows])
+            compute_ms = 1000 * (time.perf_counter() - c0)
+            fr, fc = np.nonzero(scores > 1)
+            tr, tc = np.nonzero(_demo_truth[rows])
+            await ws.send_json(
+                {
+                    "type": "batch",
+                    "seq": k,
+                    "timestamp": _demo["timestamp"].iloc[rows].round(2).tolist(),
+                    "activity_id": int(_demo["activity_id"].iloc[start]),
+                    "values": np.round(_demo_values[rows], 4).tolist(),
+                    "flags": [
+                        [int(r), int(c), round(float(scores[r, c]), 2)]
+                        for r, c in zip(fr, fc, strict=True)
+                    ],
+                    "faults": [
+                        [int(r), int(c), int(_demo_truth[rows][r, c])]
+                        for r, c in zip(tr, tc, strict=True)
+                    ],
+                    "first_sample_time": wall0 + k * period,
+                    "speed_factor": 1 / speed,
+                    "compute_ms": round(compute_ms, 3),
+                }
+            )
+        await ws.send_json({"type": "end"})
+        await ws.close()
+    except WebSocketDisconnect:
+        return

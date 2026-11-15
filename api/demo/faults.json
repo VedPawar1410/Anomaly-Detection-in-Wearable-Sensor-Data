@@ -1,0 +1,386 @@
+[
+ {
+  "type": "stuck",
+  "sensor": "heart_rate",
+  "start": 10745,
+  "length": 117
+ },
+ {
+  "type": "offset",
+  "sensor": "heart_rate",
+  "start": 5981,
+  "length": 188
+ },
+ {
+  "type": "drift",
+  "sensor": "heart_rate",
+  "start": 9681,
+  "length": 117
+ },
+ {
+  "type": "dropout",
+  "sensor": "heart_rate",
+  "start": 7309,
+  "length": 118
+ },
+ {
+  "type": "noise",
+  "sensor": "heart_rate",
+  "start": 10468,
+  "length": 247
+ },
+ {
+  "type": "spike",
+  "sensor": "heart_rate",
+  "start": 12955,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "heart_rate",
+  "start": 11171,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "heart_rate",
+  "start": 12879,
+  "length": 1
+ },
+ {
+  "type": "stuck",
+  "sensor": "hand_acc16_x",
+  "start": 2708,
+  "length": 104
+ },
+ {
+  "type": "offset",
+  "sensor": "hand_acc16_x",
+  "start": 734,
+  "length": 267
+ },
+ {
+  "type": "drift",
+  "sensor": "hand_acc16_x",
+  "start": 7111,
+  "length": 218
+ },
+ {
+  "type": "dropout",
+  "sensor": "hand_acc16_x",
+  "start": 5408,
+  "length": 261
+ },
+ {
+  "type": "noise",
+  "sensor": "hand_acc16_x",
+  "start": 13621,
+  "length": 163
+ },
+ {
+  "type": "spike",
+  "sensor": "hand_acc16_x",
+  "start": 12331,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "hand_acc16_x",
+  "start": 3216,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "hand_acc16_x",
+  "start": 6592,
+  "length": 1
+ },
+ {
+  "type": "stuck",
+  "sensor": "chest_acc16_z",
+  "start": 10813,
+  "length": 209
+ },
+ {
+  "type": "offset",
+  "sensor": "chest_acc16_z",
+  "start": 12019,
+  "length": 227
+ },
+ {
+  "type": "drift",
+  "sensor": "chest_acc16_z",
+  "start": 2005,
+  "length": 189
+ },
+ {
+  "type": "dropout",
+  "sensor": "chest_acc16_z",
+  "start": 7421,
+  "length": 290
+ },
+ {
+  "type": "noise",
+  "sensor": "chest_acc16_z",
+  "start": 7986,
+  "length": 184
+ },
+ {
+  "type": "spike",
+  "sensor": "chest_acc16_z",
+  "start": 10719,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "chest_acc16_z",
+  "start": 9689,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "chest_acc16_z",
+  "start": 11880,
+  "length": 1
+ },
+ {
+  "type": "stuck",
+  "sensor": "ankle_acc16_y",
+  "start": 9321,
+  "length": 278
+ },
+ {
+  "type": "offset",
+  "sensor": "ankle_acc16_y",
+  "start": 4707,
+  "length": 235
+ },
+ {
+  "type": "drift",
+  "sensor": "ankle_acc16_y",
+  "start": 5845,
+  "length": 244
+ },
+ {
+  "type": "dropout",
+  "sensor": "ankle_acc16_y",
+  "start": 13775,
+  "length": 207
+ },
+ {
+  "type": "noise",
+  "sensor": "ankle_acc16_y",
+  "start": 10730,
+  "length": 159
+ },
+ {
+  "type": "spike",
+  "sensor": "ankle_acc16_y",
+  "start": 10583,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "ankle_acc16_y",
+  "start": 7336,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "ankle_acc16_y",
+  "start": 10102,
+  "length": 1
+ },
+ {
+  "type": "stuck",
+  "sensor": "hand_gyro_z",
+  "start": 11059,
+  "length": 107
+ },
+ {
+  "type": "offset",
+  "sensor": "hand_gyro_z",
+  "start": 5905,
+  "length": 204
+ },
+ {
+  "type": "drift",
+  "sensor": "hand_gyro_z",
+  "start": 1290,
+  "length": 288
+ },
+ {
+  "type": "dropout",
+  "sensor": "hand_gyro_z",
+  "start": 9021,
+  "length": 278
+ },
+ {
+  "type": "noise",
+  "sensor": "hand_gyro_z",
+  "start": 9466,
+  "length": 132
+ },
+ {
+  "type": "spike",
+  "sensor": "hand_gyro_z",
+  "start": 2228,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "hand_gyro_z",
+  "start": 11910,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "hand_gyro_z",
+  "start": 2274,
+  "length": 1
+ },
+ {
+  "type": "stuck",
+  "sensor": "ankle_gyro_y",
+  "start": 744,
+  "length": 259
+ },
+ {
+  "type": "offset",
+  "sensor": "ankle_gyro_y",
+  "start": 10930,
+  "length": 228
+ },
+ {
+  "type": "drift",
+  "sensor": "ankle_gyro_y",
+  "start": 2919,
+  "length": 142
+ },
+ {
+  "type": "dropout",
+  "sensor": "ankle_gyro_y",
+  "start": 6042,
+  "length": 206
+ },
+ {
+  "type": "noise",
+  "sensor": "ankle_gyro_y",
+  "start": 10383,
+  "length": 228
+ },
+ {
+  "type": "spike",
+  "sensor": "ankle_gyro_y",
+  "start": 1028,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "ankle_gyro_y",
+  "start": 4800,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "ankle_gyro_y",
+  "start": 6746,
+  "length": 1
+ },
+ {
+  "type": "stuck",
+  "sensor": "chest_mag_x",
+  "start": 2860,
+  "length": 183
+ },
+ {
+  "type": "offset",
+  "sensor": "chest_mag_x",
+  "start": 7204,
+  "length": 184
+ },
+ {
+  "type": "drift",
+  "sensor": "chest_mag_x",
+  "start": 1871,
+  "length": 115
+ },
+ {
+  "type": "dropout",
+  "sensor": "chest_mag_x",
+  "start": 2475,
+  "length": 272
+ },
+ {
+  "type": "noise",
+  "sensor": "chest_mag_x",
+  "start": 4990,
+  "length": 169
+ },
+ {
+  "type": "spike",
+  "sensor": "chest_mag_x",
+  "start": 722,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "chest_mag_x",
+  "start": 5813,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "chest_mag_x",
+  "start": 8030,
+  "length": 1
+ },
+ {
+  "type": "stuck",
+  "sensor": "hand_temp",
+  "start": 3866,
+  "length": 191
+ },
+ {
+  "type": "offset",
+  "sensor": "hand_temp",
+  "start": 5427,
+  "length": 139
+ },
+ {
+  "type": "drift",
+  "sensor": "hand_temp",
+  "start": 10048,
+  "length": 118
+ },
+ {
+  "type": "dropout",
+  "sensor": "hand_temp",
+  "start": 10751,
+  "length": 214
+ },
+ {
+  "type": "noise",
+  "sensor": "hand_temp",
+  "start": 2675,
+  "length": 189
+ },
+ {
+  "type": "spike",
+  "sensor": "hand_temp",
+  "start": 2934,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "hand_temp",
+  "start": 12653,
+  "length": 1
+ },
+ {
+  "type": "spike",
+  "sensor": "hand_temp",
+  "start": 2923,
+  "length": 1
+ }
+]

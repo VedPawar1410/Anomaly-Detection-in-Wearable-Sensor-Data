@@ -1,0 +1,26 @@
+{
+  "compute": {
+    "batch_size": 10,
+    "batches": 1400,
+    "compute_ms_per_batch": {
+      "p50": 3.155,
+      "p95": 7.299,
+      "p99": 10.499
+    },
+    "throughput_samples_per_s": 2709
+  },
+  "websocket": {
+    "url": "ws://localhost:8766/ws/stream?speed=1",
+    "messages": 300,
+    "oldest_sample_to_client_ms": {
+      "p50": 108.944,
+      "p95": 148.229,
+      "p99": 173.066
+    },
+    "batch_ready_to_client_ms": {
+      "p50": 8.944,
+      "p95": 48.229,
+      "p99": 73.066
+    }
+  }
+}
