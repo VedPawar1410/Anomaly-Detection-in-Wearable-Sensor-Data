@@ -8,6 +8,23 @@
   "injected_reading_pct": 1.086,
   "detectors": [
     {
+      "name": "rolling_zscore_drift",
+      "f1": 0.3813,
+      "pr_auc": 0.3749,
+      "precision": 0.442,
+      "recall": 0.3352,
+      "flagged_pct": 0.824,
+      "clean_false_alarm_pct": 0.581,
+      "recall_by_type": {
+        "spike": 0.8395,
+        "stuck": 0.871,
+        "offset": 0.7742,
+        "drift": 0.3387,
+        "dropout": 1.0,
+        "noise": 0.8226
+      }
+    },
+    {
       "name": "rolling_zscore",
       "f1": 0.3122,
       "pr_auc": 0.263,

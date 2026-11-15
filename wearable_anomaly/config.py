@@ -133,6 +133,9 @@ AE_PARAMS = {
     "lr": 1e-3,
 }
 
+# The detector the API serves (exported to api/model/<name>.json by `python -m wearable_anomaly.export`).
+SERVED_DETECTOR = "rolling_zscore_drift"
+
 # Thresholds are set so that this share of readings on the clean calibration
 # subject would be flagged: the expected false-alarm rate, chosen up front.
 TARGET_FALSE_ALARM_RATE = 0.005

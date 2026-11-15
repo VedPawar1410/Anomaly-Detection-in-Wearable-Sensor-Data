@@ -32,7 +32,7 @@ def _csv(df) -> bytes:
 def test_health_reports_the_served_model(client):
     body = client.get("/health").json()
     assert body["status"] == "ok"
-    assert body["detector"] == "rolling_zscore"
+    assert body["detector"] == config.SERVED_DETECTOR
     assert body["sensors"] == 31
 
 

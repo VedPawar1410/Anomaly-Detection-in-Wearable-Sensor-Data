@@ -19,7 +19,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Nav />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
         <footer className="border-t border-stone-200 py-4 text-center text-xs text-stone-500">
-          Data: PAMAP2 (UCI, CC BY 4.0). Detector: rolling z-score, calibrated on an unseen subject.
+          Data: PAMAP2 (UCI, CC BY 4.0). Detector: rolling z-score with a drift signal, calibrated on an unseen subject.
         </footer>
       </body>
     </html>

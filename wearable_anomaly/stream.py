@@ -26,37 +26,67 @@ BATCH_SIZE = 10  # samples per message: 10 messages/s at 100 Hz
 
 class StreamingZScore:
     def __init__(self, detector: RollingZScore):
+        self.d = detector
         self.cw, self.sw = detector.center_window, detector.scale_window
         self.floor = detector.scale_floor_
-        self.tj, self.ts = detector.thresholds_
+        self.thresholds = detector.thresholds_
+        # the buffer must hold the longest look-back of any signal
+        self.size = self.sw
+        if detector.uses_level:
+            self.size = max(
+                self.sw,
+                detector.level_scale_window,
+                detector.level_lag + detector.level_window - 1,
+            )
         n = len(detector.columns)
-        self.buf = np.zeros((self.sw, n))  # ring buffer of past samples
+        self.buf = np.zeros((self.size, n))  # ring buffer of past samples
         self.count = 0
         self.last = None
         self.run = np.zeros(n)
 
     def _history(self) -> np.ndarray:
-        k = min(self.count, self.sw)
-        if self.count <= self.sw:
+        k = min(self.count, self.size)
+        if self.count <= self.size:
             return self.buf[:k]
-        p = self.count % self.sw
+        p = self.count % self.size
         return np.concatenate((self.buf[p:], self.buf[:p]))  # oldest -> newest
 
     def update(self, x) -> np.ndarray:
         """Score one sample (one value per sensor). Above 1 means anomaly."""
+        nan = np.full(len(self.floor), np.nan)
         x32 = np.asarray(x, dtype=np.float32)
         x = x32.astype(np.float64)
         past = self._history()
-        recent = past[-self.cw :]
-        center = np.median(recent, axis=0) if len(recent) >= 5 else np.full_like(x, np.nan)
-        scale = past.std(axis=0, ddof=1) if len(past) >= 20 else np.full_like(x, np.nan)
-        jump = np.nan_to_num(np.abs(x - center) / np.maximum(scale, self.floor), nan=0.0)
 
+        # jump: against the median of the previous cw samples, scaled by the previous sw
+        recent = past[-self.cw :]
+        center = np.median(recent, axis=0) if len(recent) >= 5 else nan
+        jump_past = past[-self.sw :]
+        scale = jump_past.std(axis=0, ddof=1) if len(jump_past) >= 20 else nan
+        signals = [np.nan_to_num(np.abs(x - center) / np.maximum(scale, self.floor), nan=0.0)]
+
+        # stuck: identical values in a row, including this one
         self.run = np.where(x32 == self.last, self.run + 1, 1) if self.last is not None else 1.0
+        signals.append(np.broadcast_to(self.run, x.shape))
+
+        # level: last cw samples (incl. this one) vs a baseline that ended level_lag ago
+        if self.d.uses_level:
+            lag, bw, lsw = self.d.level_lag, self.d.level_window, self.d.level_scale_window
+            recent_incl = np.vstack([past[-(self.cw - 1) :], x[None, :]])
+            now_med = np.median(recent_incl, axis=0) if len(recent_incl) >= 5 else nan
+            L = len(past)  # past[L - j] is the sample j steps back
+            hi = L - lag + 1  # baseline covers lag ... lag + bw - 1 steps back
+            base = past[max(0, hi - bw) : max(0, hi)]
+            base_med = np.median(base, axis=0) if len(base) >= bw // 4 else nan
+            long_past = past[-lsw:]
+            long_scale = long_past.std(axis=0, ddof=1) if len(long_past) >= 200 else nan
+            level = np.abs(now_med - base_med) / np.maximum(long_scale, self.floor)
+            signals.append(np.nan_to_num(level, nan=0.0))
+
         self.last = x32
-        self.buf[self.count % self.sw] = x
+        self.buf[self.count % self.size] = x
         self.count += 1
-        return np.maximum(jump / self.tj, self.run / self.ts)
+        return np.max([s / t for s, t in zip(signals, self.thresholds, strict=True)], axis=0)
 
     def update_batch(self, rows: np.ndarray) -> np.ndarray:
         return np.vstack([self.update(r) for r in rows])
@@ -124,7 +154,8 @@ def main() -> None:
     parser.add_argument("--seconds", type=float, default=30)
     args = parser.parse_args()
 
-    spec = json.loads((config.ROOT / "api" / "model" / "rolling_zscore.json").read_text())
+    model_file = config.ROOT / "api" / "model" / f"{config.SERVED_DETECTOR}.json"
+    spec = json.loads(model_file.read_text())
     detector = RollingZScore.from_dict(spec["detector"])
     out = config.REPORTS_DIR / "stream_latency.json"
     report = json.loads(out.read_text()) if out.exists() else {}

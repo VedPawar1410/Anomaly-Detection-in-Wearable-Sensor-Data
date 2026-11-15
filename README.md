@@ -7,13 +7,13 @@ wearable sensor data from the PAMAP2 dataset, live, on people the models never s
 **API:** https://wearable-anomaly-api.onrender.com ([interactive docs](https://wearable-anomaly-api.onrender.com/docs))
 (free hosting: the first request after ~15 idle minutes takes 30-60 s while the API wakes up)
 
-| Served detector (rolling z-score), unseen test subjects | Value |
+| Served detector (rolling z-score + drift signal), unseen test subjects | Value |
 |---|---|
-| F1 / PR-AUC on 1,860 injected faults | **0.312 / 0.263** (best of 5 detectors; the 2024 method scores 0.024 / 0.013) |
-| False alarms on clean unseen data | **0.51%** (target 0.5%, set on a separate calibration subject) |
-| Faults caught in the live demo (event level, production) | **49 / 64 (77%)** at 1.19% false-alarm readings |
-| Stream latency, batch complete to client (local, p50 / p95) | **6.6 ms / 8.6 ms** |
-| Served model size | **3.4 KB** of JSON (the 2024 version: 52 pickles, ~560 MB) |
+| F1 / PR-AUC on 1,860 injected faults | **0.381 / 0.375** (best of 6 detectors; the 2024 method scores 0.024 / 0.013) |
+| False alarms on clean unseen data | **0.58%** (target 0.5%, set on a separate calibration subject) |
+| Faults caught in the live demo (event level) | **50 / 64 (78%)** at 1.03% false-alarm readings |
+| Stream latency, batch complete to client (local, p50 / p95) | **12.3 ms / 17.0 ms** |
+| Served model size | **4.4 KB** of JSON (the 2024 version: 52 pickles, ~560 MB) |
 
 ---
 
@@ -29,11 +29,11 @@ wearable sensor data from the PAMAP2 dataset, live, on people the models never s
         ├──► faults.py     inject labelled faults: spike, stuck, offset, drift, dropout, noise
         ▼
  detectors/                same interface: fit → calibrate (unseen subject) → score (>1 = anomaly)
-   rolling_zscore · per_sensor_rf · per_sensor_hgb · window_iforest · conv_autoencoder
+   rolling_zscore(_drift) · per_sensor_rf · per_sensor_hgb · window_iforest · conv_autoencoder
         │
         ├──► benchmark.py  every detector scores the same injected faults → reports/
         ▼
- export.py                 served model → api/model/rolling_zscore.json (3.4 KB)
+ export.py                 served model → api/model/rolling_zscore_drift.json (4.4 KB)
         │
  api/ (FastAPI, Docker, Render)            web/ (Next.js, uPlot, Vercel)
    GET  /health                              /           live stream: flags vs real faults
@@ -51,7 +51,8 @@ wearable sensor data from the PAMAP2 dataset, live, on people the models never s
 - **Thresholds from a false-alarm budget.** Each sensor's threshold is the quantile that would flag 0.5% of a
   clean, unseen subject. That turns "how sensitive?" into a number chosen up front instead of "10% of the value".
 - **Serve the simplest detector that wins.** The rolling z-score beat every learned model, is causal (works on a
-  live stream), scores at ~12 µs per row and is 3.4 KB of JSON: readable, diffable, no pickle to unpickle.
+  live stream) and is a few KB of JSON: readable, diffable, no pickle to unpickle. Its weakness, slow drifts, was
+  fixed with one more signal (the level vs. a baseline from 5-15 s ago), not a bigger model.
 - **Streaming = batch, proven by test.** The live detector keeps a ring buffer and updates per sample; a test
   checks its scores equal the benchmarked batch version on real data, so the numbers describe what is served.
 
@@ -80,7 +81,8 @@ All detectors scored the same data: test subjects 105 and 108 (534,396 rows), 1,
 
 | Detector | F1 | PR-AUC | Precision | Recall | Clean false alarms | Score speed | Model |
 |---|---|---|---|---|---|---|---|
-| **rolling_zscore** (served) | **0.312** | **0.263** | **0.402** | 0.255 | **0.51%** | 11.8 µs/row | 3.4 KB JSON |
+| **rolling_zscore_drift** (served) | **0.381** | **0.375** | **0.442** | 0.335 | 0.58% | 30.5 µs/row | 4.4 KB JSON |
+| rolling_zscore (previously served) | 0.312 | 0.263 | 0.402 | 0.255 | **0.51%** | 9.3 µs/row | 3.4 KB JSON |
 | conv_autoencoder (1D-CNN) | 0.156 | 0.095 | 0.102 | 0.339 | 3.06% | not re-measured | 45 KB |
 | window_iforest | 0.145 | 0.086 | 0.105 | 0.237 | 1.77% | 207 µs/row | 14 MB |
 | per_sensor_rf (the 2024 idea, fixed) | 0.134 | 0.116 | 0.082 | 0.371 | 4.52% | 22 µs/row | 59 MB |
@@ -111,11 +113,12 @@ mostly the timing script itself). The autoencoder needs `torch` and wasn't re-ti
 
 | | p50 | p95 | p99 |
 |---|---|---|---|
-| Compute: score a 10-sample batch (100 ms of data) | 2.6 ms | 7.6 ms | 19.0 ms |
-| Batch complete → flags at the client (local server, 30 s, 300 messages) | 6.6 ms | 8.6 ms | 9.5 ms |
-| Oldest sample in a batch → client (includes the deliberate 100 ms batching) | 106.6 ms | 108.6 ms | 109.5 ms |
+| Compute: score a 10-sample batch (100 ms of data) | 6.6 ms | 9.7 ms | 16.5 ms |
+| Batch complete → flags at the client (local server, 30 s, 300 messages) | 12.3 ms | 17.0 ms | 18.0 ms |
+| Oldest sample in a batch → client (includes the deliberate 100 ms batching) | 112.3 ms | 117.0 ms | 118.0 ms |
 
-Throughput 2,757 samples/s (~27× real time). Batching 10 samples per message trades ~100 ms of latency for 10
+Measured with the served drift detector (its ring buffer holds 30 s per sensor; the base z-score was 2.6 ms /
+6.6 ms p50 for the first two rows). Throughput 1,503 samples/s (~15× real time). Batching 10 samples per message trades ~100 ms of latency for 10
 messages a second instead of 100.
 
 ### Before vs. after
@@ -126,9 +129,9 @@ messages a second instead of 100.
 | Evaluation | Tested on its own training rows; random row split | Split by person; thresholds from a separate subject; 2 untouched test subjects |
 | Ground truth for anomalies | None | 1,860 injected faults, 6 types, labelled per reading |
 | Decision rule | `diff > 0.1 * actual`: flagged 70.5% of all readings on its own data | Per-sensor threshold from a 0.5% false-alarm budget |
-| Benchmark F1 / PR-AUC | 0.024 / 0.013 | 0.312 / 0.263 |
-| False alarms on clean unseen data | 83.5% | 0.51% |
-| Artifacts | 52 pickles (~560 MB) that can't reproduce the notebook's own printed metrics | 3.4 KB JSON, rebuilt by one command |
+| Benchmark F1 / PR-AUC | 0.024 / 0.013 | 0.381 / 0.375 |
+| False alarms on clean unseen data | 83.5% | 0.58% |
+| Artifacts | 52 pickles (~560 MB) that can't reproduce the notebook's own printed metrics | 4.4 KB JSON, rebuilt by one command |
 | Code | One 20 MB notebook with Colab paths and hidden cell order | Python package, 37 tests, CI on every push |
 | Deployment | None | Live site, REST API and WebSocket stream |
 
@@ -242,7 +245,9 @@ Docker image is 749 MB; a 47 MB upload peaked at 259 MiB of a 512 MiB memory cap
   and the numbers only describe these six types at these sizes.
 - **Small population.** 8 usable subjects; thresholds come from one calibration subject and results from two test
   subjects. Cross-sensor models' false alarms didn't transfer (4.5% against a 0.5% target).
-- **The served detector misses slow drifts** (23%): a ramp never looks like a jump against the last 0.5 s.
+- **Drift is only partly solved.** The level signal lifted drift recall from 23% to 34%; early in a ramp the shift
+  is still small, so most drifts are caught late or not at all. It also nudged clean false alarms to 0.58%,
+  slightly over the 0.5% target (walking into a new activity also shifts levels).
 - **Slow, coarse sensors trigger the stuck check.** On test subject 105, half of all flags were `ankle_temp`:
   temperature changes slowly in coarse steps, so long identical runs are normal for it.
 - **The live demo shows more false alarms (~1.2%) than the benchmark (0.51%)** because it joins 7 activity clips
@@ -308,6 +313,23 @@ honestly, and shipped the best one as a live streaming service with a web UI.
 *Known gaps I chose not to fix:* combining the z-score with a drift-sensitive detector, skipping the stuck check on
 temperature sensors, calibrating on more than one subject, full-data training, and dark mode for the web UI.
 
+### Layer 4: Fixing the served detector's blind spot (Nov 2026)
+
+*What I did:* the rolling z-score caught only 23% of slow drifts, its biggest weakness. Instead of reaching for a
+bigger model, I added one causal signal (how far the recent level has moved from a baseline 5-15 s ago) and served
+the result as `rolling_zscore_drift`.
+
+| # | Decision | Why |
+|---|---|---|
+| 4.1 | Chose the variant on injected faults in *training* subjects 101/102, then evaluated the test subjects once | Tuning on the test set is how the 2024 version fooled itself (1.5); three lags all scored within 0.002 F1, so the gain isn't a lucky setting |
+| 4.2 | Split the same 0.5% false-alarm budget three ways instead of adding a third threshold on top | The target stays the target; a new signal has to earn its place within the budget |
+| 4.3 | Kept the old `rolling_zscore` as a benchmark row | The before/after stays visible: F1 0.312 → 0.381, PR-AUC 0.263 → 0.375 (+43%), drift recall 23% → 34%, clean false alarms 0.51% → 0.58% |
+| 4.4 | Extended the streaming-equals-batch parity test to the new signal, with a ring-buffer wrap-around | The served detector must still be the benchmarked one (3.8) |
+| 4.5 | Made old pickled models load safely (`getattr` for the new attribute) | The first benchmark rerun crashed on a model saved before the attribute existed |
+
+*What it cost:* scoring went from 9.3 to 30.5 µs per row and streaming compute from 2.6 to 6.6 ms per batch (still
+~15× real time), and false alarms on clean data rose slightly above the 0.5% target. Drift is improved, not solved.
+
 ### Key takeaways
 
 1. **Check the plumbing before the algorithm.** The biggest problems were a truncated file, a missing `abs()` and
@@ -318,12 +340,14 @@ temperature sensors, calibrating on more than one subject, full-data training, a
 4. **Recall without precision is meaningless.** A rule that flags everything catches everything.
 5. **Serve what you measured.** A parity test between the streaming and batch detectors keeps benchmark numbers
    honest in production.
+6. **Fix a blind spot with a feature before a bigger model.** One causal drift signal lifted PR-AUC 43% while the
+   detector stayed a few KB of JSON.
 
 ---
 
 ## Future improvements
 
-- Combine the rolling z-score (stuck, dropout) with a drift-sensitive detector such as the autoencoder.
+- Catch drifts earlier: a CUSUM-style accumulator would flag a slow ramp before it is large.
 - Skip or retune the stuck check for slow sensors (temperature).
 - Calibrate thresholds across several subjects (leave-one-subject-out) instead of one.
 - Train on all rows with more compute; test on real, labelled sensor faults if a dataset becomes available.

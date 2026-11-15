@@ -14,13 +14,14 @@ import importlib.util
 from wearable_anomaly.detectors.autoencoder import ConvAutoencoder
 from wearable_anomaly.detectors.isolation import WindowIsolationForest
 from wearable_anomaly.detectors.per_sensor import PerSensorHGB, PerSensorRegressor
-from wearable_anomaly.detectors.rolling import RollingZScore
+from wearable_anomaly.detectors.rolling import RollingZScore, RollingZScoreDrift
 
 # name -> class. Train any of these with: python -m wearable_anomaly.train --detector <name>
 REGISTRY = {
     cls.name: cls
     for cls in (
         RollingZScore,
+        RollingZScoreDrift,
         PerSensorRegressor,
         PerSensorHGB,
         WindowIsolationForest,

@@ -2,8 +2,8 @@
 
     python -m wearable_anomaly.export
 
-Reads models/rolling_zscore.joblib (run `train --detector rolling_zscore` first) and
-writes api/model/rolling_zscore.json, which is committed and loaded by the API.
+Reads models/<config.SERVED_DETECTOR>.joblib (train it first) and writes
+api/model/<config.SERVED_DETECTOR>.json, which is committed and loaded by the API.
 
 Why JSON and not the pickle: the rolling z-score is just numbers (thresholds and
 scale floors per sensor). JSON is readable, diffable in git, independent of library
@@ -17,7 +17,7 @@ import joblib
 from wearable_anomaly import config
 from wearable_anomaly.train import model_path
 
-SERVED = "rolling_zscore"
+SERVED = config.SERVED_DETECTOR
 EXPORT_PATH = config.ROOT / "api" / "model" / f"{SERVED}.json"
 
 
@@ -25,13 +25,18 @@ def main() -> None:
     bundle = joblib.load(model_path(SERVED))
     meta = dict(bundle["meta"])
     bench = config.REPORTS_DIR / "benchmark.json"
-    if bench.exists():  # carry the benchmark numbers with the model, for /health
-        r = json.loads(bench.read_text())["detectors"][SERVED]
+    report = json.loads(bench.read_text()) if bench.exists() else {"detectors": {}}
+    r = report["detectors"].get(SERVED)
+    if r:  # carry the benchmark numbers with the model, for /health
         meta["benchmark"] = {
             "f1": r["detection"]["f1"],
             "pr_auc": r["detection"]["pr_auc"],
             "clean_false_alarm_pct": r["clean_false_alarm_pct"],
         }
+    else:
+        print(
+            f"Note: {SERVED} isn't in reports/benchmark.json yet; run the benchmark, then export again"
+        )
     EXPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     EXPORT_PATH.write_text(
         json.dumps({"detector": bundle["detector"].to_dict(), "meta": meta}, indent=2)
@@ -39,8 +44,8 @@ def main() -> None:
     print(
         f"Wrote {EXPORT_PATH.relative_to(config.ROOT)} ({EXPORT_PATH.stat().st_size / 1e3:.1f} KB)"
     )
-    if bench.exists():
-        export_web_benchmark(json.loads(bench.read_text()))
+    if report["detectors"]:
+        export_web_benchmark(report)
 
 
 WEB_BENCHMARK_PATH = config.ROOT / "web" / "lib" / "benchmark.json"

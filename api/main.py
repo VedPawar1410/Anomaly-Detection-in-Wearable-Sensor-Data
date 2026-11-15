@@ -6,7 +6,7 @@ This file only does HTTP: parsing, limits, JSON. Detection lives in the
 wearable_anomaly package so it stays testable without a server.
 
 Environment variables:
-    MODEL_PATH       served model JSON (default api/model/rolling_zscore.json)
+    MODEL_PATH       served model JSON (default api/model/<config.SERVED_DETECTOR>.json)
     MAX_UPLOAD_MB    upload size limit (default 50)
     ALLOWED_ORIGINS  comma-separated origins allowed by CORS (default http://localhost:3000)
 """
@@ -29,7 +29,9 @@ from wearable_anomaly.faults import FAULT_TYPES
 from wearable_anomaly.preprocess import clean
 from wearable_anomaly.stream import BATCH_SIZE, StreamingZScore, load_demo
 
-MODEL_PATH = Path(os.getenv("MODEL_PATH", Path(__file__).parent / "model" / "rolling_zscore.json"))
+MODEL_PATH = Path(
+    os.getenv("MODEL_PATH", Path(__file__).parent / "model" / f"{config.SERVED_DETECTOR}.json")
+)
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_MB", "50")) * 1_000_000
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 

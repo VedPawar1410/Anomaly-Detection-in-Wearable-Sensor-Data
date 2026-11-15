@@ -4,7 +4,7 @@ import pytest
 
 from wearable_anomaly import detectors
 from wearable_anomaly.detectors.isolation import WindowIsolationForest
-from wearable_anomaly.detectors.rolling import RollingZScore
+from wearable_anomaly.detectors.rolling import RollingZScore, RollingZScoreDrift
 from wearable_anomaly.features import run_length
 
 COLS = ["a", "b"]
@@ -59,6 +59,16 @@ def test_window_features_never_cross_subjects():
 
 
 def test_registry_lists_all_classic_detectors():
-    assert {"rolling_zscore", "per_sensor_rf", "per_sensor_hgb", "window_iforest"} <= set(
-        detectors.REGISTRY
-    )
+    names = {"rolling_zscore", "rolling_zscore_drift", "per_sensor_rf", "per_sensor_hgb"}
+    assert names | {"window_iforest"} <= set(detectors.REGISTRY)
+
+
+def test_drift_variant_catches_a_slow_ramp_the_base_misses():
+    train, calib = _signal(20000, 0), _signal(20000, 1)
+    base = RollingZScore(COLS, false_alarm_rate=0.01).fit(train).calibrate(calib)
+    drift = RollingZScoreDrift(COLS, false_alarm_rate=0.01).fit(train).calibrate(calib)
+    test = _signal(8000, 3)
+    test.loc[5000:5599, "a"] += np.linspace(0, 3, 600)  # 3 units over 6 s: no single jump
+    ramp_end = slice(5400, 5599)  # the last 2 s of the ramp, where the shift is largest
+    assert (drift.score(test).loc[ramp_end, "a"] > 1).mean() > 0.5
+    assert (base.score(test).loc[ramp_end, "a"] > 1).mean() < 0.1

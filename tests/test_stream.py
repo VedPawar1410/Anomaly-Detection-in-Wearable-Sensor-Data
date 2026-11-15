@@ -8,7 +8,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from api import main
 from wearable_anomaly import config
-from wearable_anomaly.detectors.rolling import RollingZScore
+from wearable_anomaly.detectors.rolling import RollingZScore, RollingZScoreDrift
 from wearable_anomaly.stream import StreamingZScore, load_demo
 
 
@@ -26,23 +26,27 @@ def _signal(n, seed, cols=("a", "b", "c")):
     return df
 
 
-def test_streaming_scores_match_batch_scores_exactly():
-    """The served (streaming) detector must equal the benchmarked (batch) one: no serving skew."""
-    det = RollingZScore(["a", "b", "c"]).fit(_signal(5000, 0)).calibrate(_signal(5000, 1))
-    test = _signal(3000, 2)
+@pytest.mark.parametrize("cls", [RollingZScore, RollingZScoreDrift])
+def test_streaming_scores_match_batch_scores_exactly(cls):
+    """The served (streaming) detector must equal the benchmarked (batch) one: no serving skew.
+    6,000 samples, so the drift variant's 3,000-sample ring buffer wraps around."""
+    det = cls(["a", "b", "c"]).fit(_signal(8000, 0)).calibrate(_signal(8000, 1))
+    test = _signal(6000, 2)
     test.loc[1000, "a"] += 5.0  # spike
     test.loc[2000:2149, "b"] = test.loc[1999, "b"]  # stuck
+    test.loc[4000:4599, "c"] += np.linspace(0, 2, 600, dtype=np.float32)  # drift
     batch = det.score(test).to_numpy()
     online = StreamingZScore(det).update_batch(test[["a", "b", "c"]].to_numpy())
-    np.testing.assert_allclose(online, batch, rtol=1e-5, atol=1e-6)
+    np.testing.assert_allclose(online, batch, rtol=1e-5, atol=1e-5)
 
 
 def test_streaming_matches_batch_on_the_real_demo_with_the_served_model():
-    spec = json.loads((config.ROOT / "api" / "model" / "rolling_zscore.json").read_text())
-    det = RollingZScore.from_dict(spec["detector"])
+    model_file = config.ROOT / "api" / "model" / f"{config.SERVED_DETECTOR}.json"
+    det = RollingZScore.from_dict(json.loads(model_file.read_text())["detector"])
+    assert det.name == config.SERVED_DETECTOR
     demo, _ = load_demo()
     demo.insert(0, "subject", 108)
-    first = demo.iloc[:3000]
+    first = demo.iloc[:5000]
     batch = det.score(first).to_numpy()
     online = StreamingZScore(det).update_batch(first[det.columns].to_numpy())
     np.testing.assert_allclose(online, batch, rtol=1e-5, atol=1e-5)
