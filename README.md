@@ -233,9 +233,24 @@ docker build -t wearable-anomaly-api .
 Both redeploy on every push to `main`; CI checks the same commit. Pins: Python 3.12 (`.python-version`), exact
 versions in `requirements*.txt`, Node packages locked in `web/package-lock.json`.
 
-Verified in production: `/health`, `/detect` (3,000-row upload, results identical to local), the `wss://` stream
-(98 of 100 expected batches in 10 s, 1.9-2.3 ms server compute), and rejection of unknown browser origins. The
+Verified in production: `/health`, `/detect` (3,000-row upload, results identical to local), rejection of unknown
+browser origins, and a full replay of the live stream through the `wss://` endpoint: 50 of 64 faults caught and
+4,465 false-alarm readings, identical to the local replay, so the deployed detector is the benchmarked one. The
 Docker image is 749 MB; a 47 MB upload peaked at 259 MiB of a 512 MiB memory cap.
+
+**Why the live demo plays at 1× only.** The detector itself is fast enough for faster replays: on the laptop it
+streams at 1,503 samples/s (~15× real time), and the API accepts `?speed=` up to 50×. The limit is the free Render
+tier, which gives the API a small share of one CPU and throttles sustained load. Measured against production with
+the drift detector:
+
+| Replay speed | Batches delivered vs. needed for real time | Server compute p50 / p95 |
+|---|---|---|
+| 1× | 150 / 150 (keeps up) | 6.3 / 13.3 ms |
+| 2× | 339 / 400 (85% of the pace) | 8.8 / 95.5 ms |
+| 5× | 256 / 600 (43% of the pace) | 8.1 / 94.4 ms |
+
+So the website offers real time only. On a paid instance or a laptop, 2×-10× replays work: raise `REPLAY_SPEED`
+in `web/components/LiveStream.tsx`.
 
 ---
 
@@ -250,12 +265,13 @@ Docker image is 749 MB; a 47 MB upload peaked at 259 MiB of a 512 MiB memory cap
   slightly over the 0.5% target (walking into a new activity also shifts levels).
 - **Slow, coarse sensors trigger the stuck check.** On test subject 105, half of all flags were `ankle_temp`:
   temperature changes slowly in coarse steps, so long identical runs are normal for it.
-- **The live demo shows more false alarms (~1.2%) than the benchmark (0.51%)** because it joins 7 activity clips
+- **The live demo shows more false alarms (1.03%) than the benchmark (0.58%)** because it joins 7 activity clips
   end to end and each join is an artificial jump.
 - **The autoencoder is offline only.** Each window sees 1 s of future samples, so it isn't used for streaming.
 - **Training is subsampled** (see compute constraint above); full-data training wasn't run.
-- **Free hosting:** cold starts of 30-60 s, 512 MB of memory, and only the production Vercel URL is allowed to
-  call the API (preview deployments aren't).
+- **Free hosting:** cold starts of 30-60 s, 512 MB of memory, a throttled CPU share that limits the live demo to
+  real-time (1×) replay (faster replays work on a laptop; see Deployment), and only the production Vercel URL is
+  allowed to call the API (preview deployments aren't).
 
 ---
 

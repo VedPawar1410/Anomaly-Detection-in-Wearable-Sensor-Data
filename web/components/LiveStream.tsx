@@ -5,6 +5,11 @@ import SensorChart from "@/components/SensorChart";
 import { ACTIVITY_COLORS, WS_URL } from "@/lib/api";
 
 const WINDOW = 1000; // samples on screen: 10 s at 100 Hz
+// Real time only. The detector runs at ~15x real time on a laptop, so faster replays work
+// there (the API accepts ?speed= up to 50), but the free Render tier's CPU share is throttled
+// under sustained load: measured 2x ran at 85% of its pace and 5x at 43%. Raise this on
+// better hosting.
+const REPLAY_SPEED = 1;
 const DEFAULT_SENSORS = ["hand_acc16_x", "ankle_gyro_y", "heart_rate", "chest_mag_x"];
 
 type Fault = { type: string; sensor: string; start: number; length: number };
@@ -38,7 +43,7 @@ const emptyBuffers = (n: number): Buffers => ({
 
 export default function LiveStream() {
   const [status, setStatus] = useState<Status>("idle");
-  const [speed, setSpeed] = useState(1);
+  const speed = REPLAY_SPEED;
   const [meta, setMeta] = useState<Meta | null>(null);
   const [selected, setSelected] = useState<string[]>(DEFAULT_SENSORS);
   const [activity, setActivity] = useState("");
@@ -148,21 +153,12 @@ export default function LiveStream() {
         >
           {live ? "Stop" : status === "idle" ? "Start live stream" : "Restart"}
         </button>
-        <label className="flex items-center gap-2 text-sm text-stone-700">
-          Speed
-          <select
-            value={speed}
-            disabled={live}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-            className="rounded border border-stone-300 bg-white px-2 py-1"
-          >
-            {[1, 2, 5, 10].map((s) => (
-              <option key={s} value={s}>
-                {s}×
-              </option>
-            ))}
-          </select>
-        </label>
+        <span
+          className="text-sm text-stone-700"
+          title="Faster replays (2x-10x) work on a laptop, where the detector runs at ~15x real time. The free hosting tier's CPU limit only keeps up with 1x."
+        >
+          Speed: <strong>1× (real time)</strong>
+        </span>
         <span className="text-sm text-stone-600">
           {status === "connecting" && "Connecting…"}
           {status === "error" && "Couldn't connect to the stream. Is the API running?"}
