@@ -33,9 +33,7 @@ def download(url: str, dest: Path) -> None:
         while chunk := resp.read(1 << 20):
             out.write(chunk)
             done += len(chunk)
-            size = f"{done / 1e6:,.0f} MB" + (
-                f" / {total / 1e6:,.0f} MB" if total else ""
-            )
+            size = f"{done / 1e6:,.0f} MB" + (f" / {total / 1e6:,.0f} MB" if total else "")
             print(f"\r  downloaded {size}", end="", flush=True)
     print()
     tmp.rename(dest)
