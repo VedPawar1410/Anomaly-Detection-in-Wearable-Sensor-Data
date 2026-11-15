@@ -83,3 +83,27 @@ TEST_SUBJECTS = [105, 108]
 
 # Sensor dropouts shorter than this (in samples) are interpolated; longer ones are dropped.
 MAX_INTERP_GAP = 10
+
+# --- Training -----------------------------------------------------------------
+RANDOM_SEED = 42
+
+# Compute constraint: trained on an 8-core, 16 GB laptop. Fitting 31 forests on all
+# ~1.2M training rows at 100 Hz doesn't fit that budget, so training uses every
+# 10th row (10 Hz, ~120k rows). Calibration and testing still use every row.
+# Set TRAIN_STRIDE = 1 to train on everything when more compute is available.
+TRAIN_STRIDE = 10
+
+# Per-sensor Random Forest. Depth and leaf size are capped to keep each model
+# small (the 2024 pickles were up to 12.6 MB each, with 5 unbounded trees).
+RF_PARAMS = {
+    "n_estimators": 40,
+    "max_depth": 12,
+    "min_samples_leaf": 10,
+    "max_features": 0.5,
+    "n_jobs": -1,
+    "random_state": RANDOM_SEED,
+}
+
+# Thresholds are set so that this share of readings on the clean calibration
+# subject would be flagged: the expected false-alarm rate, chosen up front.
+TARGET_FALSE_ALARM_RATE = 0.005
