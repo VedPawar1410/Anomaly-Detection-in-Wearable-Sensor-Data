@@ -3,24 +3,24 @@
     "batch_size": 10,
     "batches": 1400,
     "compute_ms_per_batch": {
-      "p50": 3.155,
-      "p95": 7.299,
-      "p99": 10.499
+      "p50": 2.592,
+      "p95": 7.617,
+      "p99": 18.976
     },
-    "throughput_samples_per_s": 2709
+    "throughput_samples_per_s": 2757
   },
   "websocket": {
-    "url": "ws://localhost:8766/ws/stream?speed=1",
+    "url": "ws://127.0.0.1:8767/ws/stream?speed=1",
     "messages": 300,
     "oldest_sample_to_client_ms": {
-      "p50": 108.944,
-      "p95": 148.229,
-      "p99": 173.066
+      "p50": 106.64,
+      "p95": 108.6,
+      "p99": 109.483
     },
     "batch_ready_to_client_ms": {
-      "p50": 8.944,
-      "p95": 48.229,
-      "p99": 73.066
+      "p50": 6.64,
+      "p95": 8.6,
+      "p99": 9.483
     }
   }
 }
