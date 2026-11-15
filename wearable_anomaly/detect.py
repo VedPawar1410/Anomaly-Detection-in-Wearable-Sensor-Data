@@ -10,6 +10,7 @@ overwriting anything in the input.
 """
 
 import argparse
+import io
 import re
 from pathlib import Path
 
@@ -17,10 +18,40 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from wearable_anomaly import detectors
+from wearable_anomaly import config, detectors
 from wearable_anomaly.data import read_dat
 from wearable_anomaly.preprocess import clean
 from wearable_anomaly.train import DEFAULT_DETECTOR, model_path
+
+UNKNOWN_ACTIVITY = -1  # for CSVs without labels; never dropped as "transient" (0)
+
+
+def parse_upload(content: bytes, filename: str) -> pd.DataFrame:
+    """Turn uploaded bytes into a raw DataFrame that `clean()` accepts.
+
+    Accepts a PAMAP2 .dat file (54 columns, whitespace-separated, no header) or a CSV
+    whose header includes every column in config.SENSOR_COLUMNS. Raises ValueError
+    with a readable message for anything else.
+    """
+    buf = io.BytesIO(content)
+    if filename.lower().endswith(".csv"):
+        df = pd.read_csv(buf)
+        missing = [c for c in config.SENSOR_COLUMNS if c not in df.columns]
+        if missing:
+            raise ValueError(f"CSV is missing {len(missing)} sensor columns, e.g. {missing[:3]}")
+        df[config.SENSOR_COLUMNS] = df[config.SENSOR_COLUMNS].astype(np.float32)
+        if "timestamp" not in df:
+            df["timestamp"] = np.arange(len(df), dtype=np.float32) / config.SAMPLE_RATE_HZ
+        if "activity_id" not in df:
+            df["activity_id"] = UNKNOWN_ACTIVITY
+    else:
+        try:
+            df = read_dat(buf)
+        except ValueError as e:
+            raise ValueError(f"not a PAMAP2 .dat file (54 numeric columns): {e}") from e
+    match = re.search(r"(\d+)", Path(filename).stem)
+    df.insert(0, "subject", int(match.group(1)) if match else 0)
+    return df
 
 
 def detect_frame(df: pd.DataFrame, detector) -> pd.DataFrame:
@@ -49,16 +80,13 @@ def detect_frame(df: pd.DataFrame, detector) -> pd.DataFrame:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[1])
-    parser.add_argument("input", type=Path, help="PAMAP2 .dat file")
+    parser.add_argument("input", type=Path, help="PAMAP2 .dat file, or a CSV with sensor columns")
     parser.add_argument("-o", "--output", type=Path, default=Path("flags.csv"))
     parser.add_argument("--detector", default=DEFAULT_DETECTOR, choices=sorted(detectors.REGISTRY))
     args = parser.parse_args()
 
     detector = joblib.load(model_path(args.detector))["detector"]
-    raw = read_dat(args.input)
-    match = re.search(r"(\d+)", args.input.stem)
-    raw.insert(0, "subject", int(match.group(1)) if match else 0)
-    df = clean(raw)
+    df = clean(parse_upload(args.input.read_bytes(), args.input.name))
 
     flagged = detect_frame(df, detector)
     flagged.to_csv(args.output, index=False)

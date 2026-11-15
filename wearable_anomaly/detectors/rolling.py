@@ -28,6 +28,26 @@ class RollingZScore:
         self.scale_floor_ = None
         self.thresholds_ = None
 
+    # --- portable JSON form: the served model is plain numbers, no pickle ------
+    def to_dict(self) -> dict:
+        tj, ts = self.thresholds_
+        return {
+            "columns": self.columns,
+            "center_window": self.center_window,
+            "scale_window": self.scale_window,
+            "false_alarm_rate": self.false_alarm_rate,
+            "scale_floor": [float(v) for v in self.scale_floor_],
+            "jump_threshold": [float(v) for v in tj],
+            "stuck_threshold": [float(v) for v in ts],
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "RollingZScore":
+        det = cls(d["columns"], d["center_window"], d["scale_window"], d["false_alarm_rate"])
+        det.scale_floor_ = np.asarray(d["scale_floor"])
+        det.thresholds_ = (np.asarray(d["jump_threshold"]), np.asarray(d["stuck_threshold"]))
+        return det
+
     def fit(self, train: pd.DataFrame) -> "RollingZScore":
         # Floor for the rolling std, so a perfectly calm stretch doesn't divide by ~0.
         self.scale_floor_ = (0.01 * train[self.columns].std()).to_numpy() + 1e-9

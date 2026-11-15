@@ -6,27 +6,22 @@ Parsing the 1.5 GB of text takes a while, so each subject is cached as a pickle
 in data/interim/ after the first load.
 """
 
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 
 from wearable_anomaly import config
 
 
-def read_dat(path: Path, expected_rows: int | None = None) -> pd.DataFrame:
+def read_dat(path, expected_rows: int | None = None) -> pd.DataFrame:
     """Parse one whitespace-separated PAMAP2 .dat file (54 columns, no header).
 
-    Raises ValueError if the row count differs from `expected_rows`: never skip
-    or lose rows silently.
+    `path` can be a file path or a file-like object (an upload). Raises ValueError
+    if the row count differs from `expected_rows`: never skip or lose rows silently.
     """
+    name = getattr(path, "name", "upload")
     df = pd.read_csv(path, sep=r"\s+", header=None, names=config.RAW_COLUMNS, dtype=np.float32)
-    if df.shape[1] != len(config.RAW_COLUMNS):
-        raise ValueError(
-            f"{path.name}: expected {len(config.RAW_COLUMNS)} columns, got {df.shape[1]}"
-        )
     if expected_rows is not None and len(df) != expected_rows:
-        raise ValueError(f"{path.name}: expected {expected_rows:,} rows, got {len(df):,}")
+        raise ValueError(f"{name}: expected {expected_rows:,} rows, got {len(df):,}")
     df["activity_id"] = df["activity_id"].astype(np.int16)
     return df
 

@@ -29,6 +29,18 @@ def load_splits() -> dict:
     return split_by_subject(clean(load_subjects(subjects)))
 
 
+def _describe(detector):
+    """Readable settings for the model card: the wrapped estimator, or the detector's own knobs."""
+    estimator = getattr(detector, "estimator", None)
+    if estimator is not None:
+        return repr(estimator)
+    return {
+        k: v
+        for k, v in vars(detector).items()
+        if not k.endswith("_") and isinstance(v, int | float | str | dict)
+    }
+
+
 def train_detector(name: str, splits: dict) -> dict:
     """Fit on the training subjects, calibrate on the calibration subject, save, return the bundle."""
     detector = detectors.make(name)
@@ -56,7 +68,7 @@ def train_detector(name: str, splits: dict) -> dict:
             "train_rows": len(train),
             "train_stride": stride,
             "fit_seconds": round(fit_s, 1),
-            "params": repr(getattr(detector, "estimator", detector)),
+            "params": _describe(detector),
         },
     }
     config.MODELS_DIR.mkdir(exist_ok=True)
