@@ -278,14 +278,14 @@ in `web/components/LiveStream.tsx`.
 
 ## Learning log: mistakes and what I learned
 
-This project was built in layers: a college team project, a quick upload a year later, and a full rebuild I did
-alone. Each layer records what went wrong and the lesson.
+I built this project alone, in layers: a final-year college project, a quick upload a year later, and a full
+rebuild. Each layer records what went wrong and the lesson.
 
 ### Layer 1: The college notebook (Sep-Nov 2024, Google Colab, scikit-learn)
 
-*What we built:* a Colab notebook that trains one Random Forest per sensor column, predicting it from all the other
-columns, then fills missing values and flags anomalies where a reading is far from its prediction. Built as a team
-project for a university course.
+*What I built:* a Colab notebook that trains one Random Forest per sensor column, predicting it from all the other
+columns, then fills missing values and flags anomalies where a reading is far from its prediction. Built as my
+final-year project at university.
 
 | # | Mistake | What actually happened | Lesson |
 |---|---|---|---|
