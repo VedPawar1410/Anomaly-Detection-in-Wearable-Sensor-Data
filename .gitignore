@@ -1,0 +1,28 @@
+# Data: downloaded by scripts/download_data.py, never committed
+data/*
+!data/README.md
+
+# Trained models: rebuilt by `python -m wearable_anomaly.train`
+models/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Node / Next.js (web/)
+node_modules/
+.next/
+out/
+
+# Env and OS
+.env
+.env.local
+.DS_Store
