@@ -104,6 +104,22 @@ RF_PARAMS = {
     "random_state": RANDOM_SEED,
 }
 
+# Per-sensor histogram gradient boosting (early stopping on a 10% validation split).
+HGB_PARAMS = {
+    "max_iter": 200,
+    "learning_rate": 0.1,
+    "max_leaf_nodes": 31,
+    "random_state": RANDOM_SEED,
+}
+
+# One Isolation Forest per sensor on trailing-window features.
+IFOREST_PARAMS = {
+    "n_estimators": 100,
+    "max_samples": 512,
+    "n_jobs": -1,
+    "random_state": RANDOM_SEED,
+}
+
 # Thresholds are set so that this share of readings on the clean calibration
 # subject would be flagged: the expected false-alarm rate, chosen up front.
 TARGET_FALSE_ALARM_RATE = 0.005

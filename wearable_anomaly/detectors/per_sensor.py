@@ -15,7 +15,7 @@ What changed from 2024:
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
 from sklearn.metrics import r2_score
 
 from wearable_anomaly import config
@@ -71,6 +71,18 @@ class PerSensorRegressor:
         preds = self.predict(clean_test)
         r2 = {c: round(float(r2_score(clean_test[c], preds[c])), 4) for c in self.columns}
         return {"median_r2": round(float(np.median(list(r2.values()))), 4), "r2": r2}
+
+
+class PerSensorHGB(PerSensorRegressor):
+    """Same idea with histogram gradient boosting: bins features, so it trains far faster
+    and the saved model is much smaller. That speed buys 5x more training rows."""
+
+    name = "per_sensor_hgb"
+    train_stride = 2
+
+    def __init__(self, columns=None, estimator=None, false_alarm_rate=None):
+        estimator = estimator or HistGradientBoostingRegressor(**config.HGB_PARAMS)
+        super().__init__(columns, estimator, false_alarm_rate)
 
 
 class Rule2024:

@@ -16,6 +16,137 @@
   },
   "target_false_alarm_pct": 0.5,
   "detectors": {
+    "per_sensor_hgb": {
+      "clean_false_alarm_pct": 4.533,
+      "detection": {
+        "precision": 0.0808,
+        "recall": 0.3722,
+        "f1": 0.1328,
+        "pr_auc": 0.1076,
+        "flagged_pct": 5.006,
+        "per_fault_type": {
+          "spike": {
+            "reading_recall": 0.9645,
+            "event_recall": 0.9645,
+            "events": 1240
+          },
+          "stuck": {
+            "reading_recall": 0.0308,
+            "event_recall": 0.1774,
+            "events": 124
+          },
+          "offset": {
+            "reading_recall": 0.6893,
+            "event_recall": 0.8387,
+            "events": 124
+          },
+          "drift": {
+            "reading_recall": 0.4385,
+            "event_recall": 0.9597,
+            "events": 124
+          },
+          "dropout": {
+            "reading_recall": 0.2033,
+            "event_recall": 0.3387,
+            "events": 124
+          },
+          "noise": {
+            "reading_recall": 0.305,
+            "event_recall": 1.0,
+            "events": 124
+          }
+        }
+      },
+      "per_sensor_false_alarm_pct": {
+        "heart_rate": 3.813,
+        "hand_temp": 5.821,
+        "hand_acc16_x": 2.523,
+        "hand_acc16_y": 2.079,
+        "hand_acc16_z": 1.505,
+        "hand_gyro_x": 2.101,
+        "hand_gyro_y": 5.501,
+        "hand_gyro_z": 3.057,
+        "hand_mag_x": 7.057,
+        "hand_mag_y": 18.936,
+        "hand_mag_z": 5.318,
+        "chest_temp": 0.0,
+        "chest_acc16_x": 1.713,
+        "chest_acc16_y": 5.084,
+        "chest_acc16_z": 1.808,
+        "chest_gyro_x": 1.7,
+        "chest_gyro_y": 2.235,
+        "chest_gyro_z": 2.288,
+        "chest_mag_x": 19.07,
+        "chest_mag_y": 3.9,
+        "chest_mag_z": 6.682,
+        "ankle_temp": 0.0,
+        "ankle_acc16_x": 2.467,
+        "ankle_acc16_y": 0.676,
+        "ankle_acc16_z": 0.583,
+        "ankle_gyro_x": 2.8,
+        "ankle_gyro_y": 7.721,
+        "ankle_gyro_z": 5.173,
+        "ankle_mag_x": 1.296,
+        "ankle_mag_y": 8.005,
+        "ankle_mag_z": 9.624
+      },
+      "score_us_per_row": 104.22,
+      "meta": {
+        "trained_on": "2026-11-15",
+        "sklearn_version": "1.9.1",
+        "train_subjects": [
+          101,
+          102,
+          103,
+          104,
+          106
+        ],
+        "calib_subjects": [
+          107
+        ],
+        "train_rows": 584450,
+        "train_stride": 2,
+        "fit_seconds": 2045.8,
+        "params": "HistGradientBoostingRegressor(max_iter=200, random_state=42)"
+      },
+      "model_mb": 11.2,
+      "extra": {
+        "median_r2": 0.0308,
+        "r2": {
+          "heart_rate": 0.1246,
+          "hand_temp": 0.0308,
+          "hand_acc16_x": 0.6057,
+          "hand_acc16_y": 0.013,
+          "hand_acc16_z": 0.2098,
+          "hand_gyro_x": 0.1248,
+          "hand_gyro_y": -0.2918,
+          "hand_gyro_z": 0.0873,
+          "hand_mag_x": 0.5703,
+          "hand_mag_y": -0.0644,
+          "hand_mag_z": 0.1891,
+          "chest_temp": -0.2236,
+          "chest_acc16_x": -0.1053,
+          "chest_acc16_y": 0.332,
+          "chest_acc16_z": 0.5312,
+          "chest_gyro_x": 0.1808,
+          "chest_gyro_y": 0.1438,
+          "chest_gyro_z": 0.0792,
+          "chest_mag_x": -0.3447,
+          "chest_mag_y": 0.7476,
+          "chest_mag_z": 0.5232,
+          "ankle_temp": -0.4435,
+          "ankle_acc16_x": -0.3134,
+          "ankle_acc16_y": -0.1358,
+          "ankle_acc16_z": -0.1812,
+          "ankle_gyro_x": -0.3432,
+          "ankle_gyro_y": -0.6416,
+          "ankle_gyro_z": 0.0257,
+          "ankle_mag_x": 0.1503,
+          "ankle_mag_y": -0.5942,
+          "ankle_mag_z": -0.7777
+        }
+      }
+    },
     "per_sensor_rf": {
       "clean_false_alarm_pct": 4.523,
       "detection": {
@@ -90,7 +221,7 @@
         "ankle_mag_y": 9.837,
         "ankle_mag_z": 12.846
       },
-      "score_us_per_row": 8.99,
+      "score_us_per_row": 20.78,
       "meta": {
         "trained_on": "2026-11-15",
         "sklearn_version": "1.9.1",
@@ -152,6 +283,196 @@
           "ankle_mag_z": -0.8002
         }
       }
+    },
+    "rolling_zscore": {
+      "clean_false_alarm_pct": 0.514,
+      "detection": {
+        "precision": 0.4022,
+        "recall": 0.2551,
+        "f1": 0.3122,
+        "pr_auc": 0.263,
+        "flagged_pct": 0.689,
+        "per_fault_type": {
+          "spike": {
+            "reading_recall": 0.8637,
+            "event_recall": 0.8637,
+            "events": 1240
+          },
+          "stuck": {
+            "reading_recall": 0.8681,
+            "event_recall": 0.871,
+            "events": 124
+          },
+          "offset": {
+            "reading_recall": 0.0665,
+            "event_recall": 0.7581,
+            "events": 124
+          },
+          "drift": {
+            "reading_recall": 0.0057,
+            "event_recall": 0.2339,
+            "events": 124
+          },
+          "dropout": {
+            "reading_recall": 0.8903,
+            "event_recall": 1.0,
+            "events": 124
+          },
+          "noise": {
+            "reading_recall": 0.0746,
+            "event_recall": 0.879,
+            "events": 124
+          }
+        }
+      },
+      "per_sensor_false_alarm_pct": {
+        "heart_rate": 1.388,
+        "hand_temp": 1.627,
+        "hand_acc16_x": 0.248,
+        "hand_acc16_y": 0.283,
+        "hand_acc16_z": 0.262,
+        "hand_gyro_x": 0.258,
+        "hand_gyro_y": 0.277,
+        "hand_gyro_z": 0.275,
+        "hand_mag_x": 0.266,
+        "hand_mag_y": 0.339,
+        "hand_mag_z": 0.281,
+        "chest_temp": 0.701,
+        "chest_acc16_x": 0.247,
+        "chest_acc16_y": 0.221,
+        "chest_acc16_z": 0.285,
+        "chest_gyro_x": 0.256,
+        "chest_gyro_y": 0.27,
+        "chest_gyro_z": 0.275,
+        "chest_mag_x": 0.159,
+        "chest_mag_y": 0.272,
+        "chest_mag_z": 0.262,
+        "ankle_temp": 4.983,
+        "ankle_acc16_x": 0.24,
+        "ankle_acc16_y": 0.159,
+        "ankle_acc16_z": 0.167,
+        "ankle_gyro_x": 0.342,
+        "ankle_gyro_y": 0.357,
+        "ankle_gyro_z": 0.299,
+        "ankle_mag_x": 0.243,
+        "ankle_mag_y": 0.42,
+        "ankle_mag_z": 0.273
+      },
+      "score_us_per_row": 8.7,
+      "meta": {
+        "trained_on": "2026-11-15",
+        "sklearn_version": "1.9.1",
+        "train_subjects": [
+          101,
+          102,
+          103,
+          104,
+          106
+        ],
+        "calib_subjects": [
+          107
+        ],
+        "train_rows": 1168899,
+        "train_stride": 1,
+        "fit_seconds": 0.1,
+        "params": "<wearable_anomaly.detectors.rolling.RollingZScore object at 0x10c8a5ee0>"
+      },
+      "model_mb": 0.0
+    },
+    "window_iforest": {
+      "clean_false_alarm_pct": 1.771,
+      "detection": {
+        "precision": 0.1047,
+        "recall": 0.2369,
+        "f1": 0.1452,
+        "pr_auc": 0.0862,
+        "flagged_pct": 2.459,
+        "per_fault_type": {
+          "spike": {
+            "reading_recall": 0.4032,
+            "event_recall": 0.4032,
+            "events": 1240
+          },
+          "stuck": {
+            "reading_recall": 0.0029,
+            "event_recall": 0.0323,
+            "events": 124
+          },
+          "offset": {
+            "reading_recall": 0.2372,
+            "event_recall": 0.629,
+            "events": 124
+          },
+          "drift": {
+            "reading_recall": 0.1504,
+            "event_recall": 0.2984,
+            "events": 124
+          },
+          "dropout": {
+            "reading_recall": 0.1248,
+            "event_recall": 0.3306,
+            "events": 124
+          },
+          "noise": {
+            "reading_recall": 0.8411,
+            "event_recall": 0.9919,
+            "events": 124
+          }
+        }
+      },
+      "per_sensor_false_alarm_pct": {
+        "heart_rate": 0.429,
+        "hand_temp": 0.389,
+        "hand_acc16_x": 3.393,
+        "hand_acc16_y": 1.004,
+        "hand_acc16_z": 3.089,
+        "hand_gyro_x": 2.597,
+        "hand_gyro_y": 2.726,
+        "hand_gyro_z": 3.4,
+        "hand_mag_x": 1.745,
+        "hand_mag_y": 1.52,
+        "hand_mag_z": 2.016,
+        "chest_temp": 0.411,
+        "chest_acc16_x": 2.351,
+        "chest_acc16_y": 3.3,
+        "chest_acc16_z": 4.04,
+        "chest_gyro_x": 2.671,
+        "chest_gyro_y": 1.994,
+        "chest_gyro_z": 1.954,
+        "chest_mag_x": 0.768,
+        "chest_mag_y": 0.757,
+        "chest_mag_z": 0.746,
+        "ankle_temp": 0.484,
+        "ankle_acc16_x": 0.919,
+        "ankle_acc16_y": 1.667,
+        "ankle_acc16_z": 0.715,
+        "ankle_gyro_x": 0.219,
+        "ankle_gyro_y": 2.685,
+        "ankle_gyro_z": 4.307,
+        "ankle_mag_x": 1.47,
+        "ankle_mag_y": 0.911,
+        "ankle_mag_z": 0.228
+      },
+      "score_us_per_row": 138.53,
+      "meta": {
+        "trained_on": "2026-11-15",
+        "sklearn_version": "1.9.1",
+        "train_subjects": [
+          101,
+          102,
+          103,
+          104,
+          106
+        ],
+        "calib_subjects": [
+          107
+        ],
+        "train_rows": 1168899,
+        "train_stride": 1,
+        "fit_seconds": 11.8,
+        "params": "IsolationForest(max_samples=512, n_jobs=-1, random_state=42)"
+      },
+      "model_mb": 14.4
     },
     "rule_2024": {
       "clean_false_alarm_pct": 83.5,
@@ -227,7 +548,7 @@
         "ankle_mag_y": 98.153,
         "ankle_mag_z": 90.643
       },
-      "score_us_per_row": 8.6,
+      "score_us_per_row": 19.61,
       "meta": {}
     }
   }

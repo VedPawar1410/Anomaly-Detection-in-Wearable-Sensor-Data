@@ -9,11 +9,14 @@ Every detector has the same interface, so the benchmark can treat them alike:
 A score is "how far past the threshold": 1.0 is exactly at it, for every sensor.
 """
 
-from wearable_anomaly.detectors.per_sensor import PerSensorRegressor
+from wearable_anomaly.detectors.isolation import WindowIsolationForest
+from wearable_anomaly.detectors.per_sensor import PerSensorHGB, PerSensorRegressor
+from wearable_anomaly.detectors.rolling import RollingZScore
 
 # name -> class. Train any of these with: python -m wearable_anomaly.train --detector <name>
 REGISTRY = {
-    PerSensorRegressor.name: PerSensorRegressor,
+    cls.name: cls
+    for cls in (RollingZScore, PerSensorRegressor, PerSensorHGB, WindowIsolationForest)
 }
 
 
