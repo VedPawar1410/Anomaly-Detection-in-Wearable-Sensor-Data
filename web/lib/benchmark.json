@@ -1,0 +1,113 @@
+{
+  "test_subjects": [
+    105,
+    108
+  ],
+  "test_rows": 534396,
+  "injected_events": 1860,
+  "injected_reading_pct": 1.086,
+  "detectors": [
+    {
+      "name": "rolling_zscore",
+      "f1": 0.3122,
+      "pr_auc": 0.263,
+      "precision": 0.4022,
+      "recall": 0.2551,
+      "flagged_pct": 0.689,
+      "clean_false_alarm_pct": 0.514,
+      "recall_by_type": {
+        "spike": 0.8637,
+        "stuck": 0.871,
+        "offset": 0.7581,
+        "drift": 0.2339,
+        "dropout": 1.0,
+        "noise": 0.879
+      }
+    },
+    {
+      "name": "per_sensor_rf",
+      "f1": 0.1339,
+      "pr_auc": 0.1164,
+      "precision": 0.0817,
+      "recall": 0.371,
+      "flagged_pct": 4.935,
+      "clean_false_alarm_pct": 4.523,
+      "recall_by_type": {
+        "spike": 0.9685,
+        "stuck": 0.1048,
+        "offset": 0.8387,
+        "drift": 0.9677,
+        "dropout": 0.2177,
+        "noise": 1.0
+      }
+    },
+    {
+      "name": "per_sensor_hgb",
+      "f1": 0.1328,
+      "pr_auc": 0.1076,
+      "precision": 0.0808,
+      "recall": 0.3722,
+      "flagged_pct": 5.006,
+      "clean_false_alarm_pct": 4.533,
+      "recall_by_type": {
+        "spike": 0.9645,
+        "stuck": 0.1774,
+        "offset": 0.8387,
+        "drift": 0.9597,
+        "dropout": 0.3387,
+        "noise": 1.0
+      }
+    },
+    {
+      "name": "conv_autoencoder",
+      "f1": 0.1562,
+      "pr_auc": 0.0952,
+      "precision": 0.1015,
+      "recall": 0.3394,
+      "flagged_pct": 3.635,
+      "clean_false_alarm_pct": 3.058,
+      "recall_by_type": {
+        "spike": 0.975,
+        "stuck": 0.1532,
+        "offset": 0.9355,
+        "drift": 0.9919,
+        "dropout": 0.2984,
+        "noise": 1.0
+      }
+    },
+    {
+      "name": "window_iforest",
+      "f1": 0.1452,
+      "pr_auc": 0.0862,
+      "precision": 0.1047,
+      "recall": 0.2369,
+      "flagged_pct": 2.459,
+      "clean_false_alarm_pct": 1.771,
+      "recall_by_type": {
+        "spike": 0.4032,
+        "stuck": 0.0323,
+        "offset": 0.629,
+        "drift": 0.2984,
+        "dropout": 0.3306,
+        "noise": 0.9919
+      }
+    },
+    {
+      "name": "rule_2024",
+      "f1": 0.0238,
+      "pr_auc": 0.0126,
+      "precision": 0.0121,
+      "recall": 0.9288,
+      "flagged_pct": 83.68,
+      "clean_false_alarm_pct": 83.5,
+      "recall_by_type": {
+        "spike": 0.9903,
+        "stuck": 0.879,
+        "offset": 0.9758,
+        "drift": 0.9839,
+        "dropout": 1.0,
+        "noise": 1.0
+      }
+    }
+  ]
+}
